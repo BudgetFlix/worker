@@ -1,60 +1,37 @@
 package hu.budgetflix.worker;
 
-import java.io.IOException;
-import java.nio.file.*;
-import java.time.LocalDateTime;
-import java.util.stream.Stream;
+import hu.budgetflix.worker.logic.FfmpegRunner;
+import hu.budgetflix.worker.logic.FileMover;
+import hu.budgetflix.worker.logic.Observer;
+import hu.budgetflix.worker.logic.Orchestrator;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
+    public static void main(String[] args) throws Exception {
 
-        private static final Long SLEEP_MS = Long.parseLong(
-                System.getenv().getOrDefault("WORKER_SLEEP_MS", "5000")
-        );
+        ScheduledExecutorService starter = Executors.newSingleThreadScheduledExecutor();
 
-        private static final Path INBOX_DIR = Paths.get(
-                System.getenv().getOrDefault("INBOX_DIR", "/srv/media/inbox")
-        );
+        FileMover mover = new FileMover();
+        FfmpegRunner runner = new FfmpegRunner();
+        Observer observer = new Observer();
 
-    public static void main(String[] args) {
+        Orchestrator orchestrator = new Orchestrator(mover,runner, observer);
 
-        while(true) {
-            try {
-                scanInbox();
-                Thread.sleep(SLEEP_MS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log("Shot Down is requesting. By");
-                return;
-            } catch (Exception e) {
-                log("Error in loop: " + e.getMessage());
-                e.printStackTrace(System.out);
+        starter.scheduleAtFixedRate(() -> {
+            if(observer.readyCount() > 0 ){
+                try {
+                    orchestrator.runOnceUntilIdle();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                starter.shutdown();
             }
-
-        }
-
-
-
-    }
-
-    private static void scanInbox() throws IOException{
-        if(!Files.exists(INBOX_DIR)){
-            log("inbox is not exist" + INBOX_DIR);
-            return;
-        }
-        if(!Files.isDirectory(INBOX_DIR)){
-            log("inbox is not a directory" + INBOX_DIR);
-            return;
-        }
-        try (Stream<Path> paths = Files.list(INBOX_DIR)){
-            Long count = paths.filter(Files::isRegularFile).count();
-
-            log("Inbox file sum: " + count);
-        }
-    }
+        },0,5, TimeUnit.SECONDS);
 
 
 
-    private static void log(String msg) {
-        System.out.println(LocalDateTime.now() + " | " + msg);
     }
 }
