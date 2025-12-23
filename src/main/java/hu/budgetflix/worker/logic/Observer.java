@@ -9,10 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 class FileState {
     long lastSize;
@@ -22,7 +19,7 @@ class FileState {
 
 public class Observer {
     Map<Path, FileState> states = new ConcurrentHashMap<>();
-    Deque<Path> readyToEncode = new ArrayDeque<>();
+    Deque<Path> readyToEncode = new ConcurrentLinkedDeque<>();
     ScheduledExecutorService watchingDownloaderFile = Executors.newSingleThreadScheduledExecutor();
 
 

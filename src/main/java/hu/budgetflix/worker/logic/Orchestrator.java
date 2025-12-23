@@ -58,7 +58,7 @@ public class Orchestrator {
         if(r.success()){
             mover.moveProcessingToDone(currentProcessingFile);
         } else {
-            mover.writeErrorLog(currentProcessingFile,r.exitCode(),r.exitCode());
+            //mover.writeErrorLog(currentProcessingFile,r.exitCode(),r.exitCode());
             mover.moveProcessingToError(currentProcessingFile);
         }
         currentJob = null;

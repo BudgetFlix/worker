@@ -9,13 +9,13 @@ import java.nio.file.StandardCopyOption;
 
 public class FileMover {
     public Path moveNewToProcessing(Path path) throws IOException {
-        return Files.move(path, WorkerConfig.PROCESS_DIR,
+        return Files.move(path, WorkerConfig.PROCESS_DIR.resolve(path.getFileName()),
                 StandardCopyOption.ATOMIC_MOVE,
                 StandardCopyOption.REPLACE_EXISTING);
     }
 
     public void moveProcessingToDone(Path currentProcessingFile) throws IOException {
-        Files.move(currentProcessingFile, WorkerConfig.DONE_DIR,
+        Files.move(currentProcessingFile, WorkerConfig.DONE_DIR.resolve(currentProcessingFile.getFileName()),
                 StandardCopyOption.ATOMIC_MOVE,
                 StandardCopyOption.REPLACE_EXISTING);
     }
@@ -25,7 +25,7 @@ public class FileMover {
     }
 
     public void moveProcessingToError(Path currentProcessingFile) throws IOException {
-        Files.move(currentProcessingFile, WorkerConfig.ERROR_DIR,
+        Files.move(currentProcessingFile, WorkerConfig.ERROR_DIR.resolve(currentProcessingFile.getFileName()),
                 StandardCopyOption.ATOMIC_MOVE,
                 StandardCopyOption.REPLACE_EXISTING);
     }
