@@ -13,6 +13,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         ScheduledExecutorService starter = Executors.newSingleThreadScheduledExecutor();
+        System.out.println("hello worker");
 
         FileMover mover = new FileMover();
         FfmpegRunner runner = new FfmpegRunner();
@@ -23,6 +24,7 @@ public class Main {
         starter.scheduleAtFixedRate(() -> {
             if(observer.readyCount() > 0 ){
                 try {
+                    System.out.println("in progres");
                     orchestrator.runOnceUntilIdle();
                 } catch (Exception e) {
                     throw new RuntimeException(e);

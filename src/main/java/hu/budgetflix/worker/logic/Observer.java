@@ -37,6 +37,7 @@ public class Observer {
     }
 
     void tick() {
+        System.out.println("i'am wathing");
         if(allFilesDownloaded()){
             watchingDownloaderFile.shutdown();
         }
@@ -44,6 +45,7 @@ public class Observer {
             long now = System.currentTimeMillis();
 
             for (Path file : stream) {
+                System.out.println(file.getFileName());
                 if (!Files.isRegularFile(file)) continue;
 
                 FileState state = states.computeIfAbsent(
