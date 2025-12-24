@@ -18,7 +18,7 @@ public class Orchestrator {
     private final Observer observer;
 
     private CompletableFuture<JobResult> currentJob = null;
-    private Path currentProcessingFile = null;
+    private  Optional<Video> currentProcessingVideo;
 
     public Orchestrator(FileMover mover, FfmpegRunner runner, Observer observer1) {
         this.mover = mover;
@@ -38,19 +38,17 @@ public class Orchestrator {
                 continue;
             }
 
-            Optional<Video> next = observer.findNextInNew();
-            if (next.isPresent()) {
-                Path moved;
+             currentProcessingVideo = observer.findNextInNew();
+            if (currentProcessingVideo.isPresent()) {
                 try {
-                    moved = mover.moveNewToProcessing(next.get().getPath());
+                    currentProcessingVideo.get().setPath(mover.moveNewToProcessing(currentProcessingVideo.get().getPath()));
                     Out.log("success moving");
-                    currentProcessingFile = moved;
 
-                    List<String> cmd = buildFfmpegCmd(next);
+                    List<String> cmd = buildFfmpegCmd(currentProcessingVideo);
 
-                    Out.log("start ffmpeg | " + currentProcessingFile);
+                    Out.log("start ffmpeg | " + currentProcessingVideo.get().toString());
 
-                    Path out = Path.of("/srv/media/library/" + next.get().getId() + "/hls/");
+                    Path out = Path.of("/srv/media/library/" + currentProcessingVideo.get().getId() + "/hls/");
                     Files.createDirectories(out);
                     currentJob = runner.start(cmd);
 
@@ -100,13 +98,13 @@ public class Orchestrator {
 
     private void onJobFinished(JobResult r) throws IOException {
         if (r.success()) {
-            mover.moveProcessingToDone(currentProcessingFile);
+            mover.moveProcessingToDone(currentProcessingVideo.orElseThrow().getPath());
         } else {
             //mover.writeErrorLog(currentProcessingFile,r.exitCode(),r.exitCode());
-            mover.moveProcessingToError(currentProcessingFile);
+            mover.moveProcessingToError(currentProcessingVideo.orElseThrow().getPath());
         }
         currentJob = null;
-        currentProcessingFile = null;
+        currentProcessingVideo = Optional.empty();
     }
 
     private JobResult waitingForProcessingFinish() {
