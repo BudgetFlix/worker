@@ -1,6 +1,7 @@
 package hu.budgetflix.worker.logic;
 
 import hu.budgetflix.worker.config.WorkerConfig;
+import hu.budgetflix.worker.view.Out;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +38,9 @@ public class Observer {
     }
 
     void tick() {
-        System.out.println("i'am wathing");
+
+        Out.log("observer is running");
+
         if(allFilesDownloaded()){
             watchingDownloaderFile.shutdown();
         }
@@ -45,7 +48,7 @@ public class Observer {
             long now = System.currentTimeMillis();
 
             for (Path file : stream) {
-                System.out.println(file.getFileName()); // debug
+                Out.log(file.toString()); // debug
                 if (!Files.isRegularFile(file)) continue;
 
                 FileState state = states.computeIfAbsent(
@@ -60,7 +63,7 @@ public class Observer {
                         state.stableSince = now;
                     }
 
-                    if (now - state.stableSince >= 90_0000) {
+                    if (now - state.stableSince >= 10) {
                         readyToEncode.addLast(file);
                         states.remove(file);
                     }
