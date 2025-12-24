@@ -1,6 +1,7 @@
 package hu.budgetflix.worker.logic;
 
 import hu.budgetflix.worker.model.JobResult;
+import hu.budgetflix.worker.view.Out;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -29,6 +30,7 @@ public class Orchestrator {
 
 
             if (currentJob != null) {
+                Out.log("ffmpeg is in progress");
                 JobResult r = waitingForProcessingFinish();
                 onJobFinished(r);
                 continue;
@@ -36,6 +38,8 @@ public class Orchestrator {
 
             Optional<Path> next = observer.findNextInNew();
             if (next.isPresent()) {
+                Out.log("start ffmpeg | " + currentProcessingFile);
+
                 Path moved = mover.moveNewToProcessing(next.get());
                 currentProcessingFile = moved;
 
