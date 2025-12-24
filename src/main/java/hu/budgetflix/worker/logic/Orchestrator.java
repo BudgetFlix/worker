@@ -1,9 +1,11 @@
 package hu.budgetflix.worker.logic;
 
 import hu.budgetflix.worker.model.JobResult;
+import hu.budgetflix.worker.model.Video;
 import hu.budgetflix.worker.view.Out;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -36,17 +38,20 @@ public class Orchestrator {
                 continue;
             }
 
-            Optional<Path> next = observer.findNextInNew();
+            Optional<Video> next = observer.findNextInNew();
             if (next.isPresent()) {
                 Path moved;
                 try {
-                    moved = mover.moveNewToProcessing(next.get());
+                    moved = mover.moveNewToProcessing(next.get().getPath());
                     Out.log("success moving");
                     currentProcessingFile = moved;
 
-                    List<String> cmd = buildFfmpegCmd(moved);
+                    List<String> cmd = buildFfmpegCmd(next);
 
                     Out.log("start ffmpeg | " + currentProcessingFile);
+
+                    Path out = Path.of("/srv/media/library/" + next.get().getId() + "/hls/");
+                    Files.createDirectories(out);
                     currentJob = runner.start(cmd);
 
                 } catch (Exception e) {
@@ -61,12 +66,13 @@ public class Orchestrator {
 
     }
 
-    private List<String> buildFfmpegCmd(Path in) {
-        Path out = in.resolveSibling(in.getFileName().toString() + ".mp4");
+    private List<String> buildFfmpegCmd(Optional<Video> video) {
+        if(video.isEmpty()) return List.of();
+        Path out = Path.of("/srv/media/library/" + video.get().getId() + "/hls/");
         return List.of(
                 "ffmpeg",
                 "-y",
-                "-i", in.toString(),
+                "-i", video.get().getPath().toString(),
 
                 "-map", "0:v:0",
                 "-map", "0:a:0",
@@ -86,9 +92,9 @@ public class Orchestrator {
                 "-hls_time", "6",
                 "-hls_playlist_type", "vod",
                 "-hls_segment_filename",
-                "/srv/media/library/test/hls/seg_%03d.ts",
+                out + "seg_%03d.ts",
 
-                "/srv/media/library/test/hls/index.m3u8"
+                out + "index.m3u8"
         );
     }
 

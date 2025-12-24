@@ -1,6 +1,7 @@
 package hu.budgetflix.worker.logic;
 
 import hu.budgetflix.worker.config.WorkerConfig;
+import hu.budgetflix.worker.model.Video;
 import hu.budgetflix.worker.view.Out;
 
 import java.io.File;
@@ -20,7 +21,7 @@ class FileState {
 
 public class Observer {
     Map<Path, FileState> states = new ConcurrentHashMap<>();
-    Deque<Path> readyToEncode = new ConcurrentLinkedDeque<>();
+    Deque<Video> readyToEncode = new ConcurrentLinkedDeque<>();
     ScheduledExecutorService watchingDownloaderFile = Executors.newSingleThreadScheduledExecutor();
 
 
@@ -64,7 +65,7 @@ public class Observer {
                     }
 
                     if (now - state.stableSince >= 10) {
-                        readyToEncode.addLast(file);
+                        readyToEncode.addLast(new Video(file));
                         states.remove(file);
                     }
                 } else {
@@ -85,7 +86,7 @@ public class Observer {
         return readyToEncode.size() == Objects.requireNonNull(new File(WorkerConfig.NEW_DIR.toUri()).listFiles()).length;
     }
 
-    public Optional<Path> findNextInNew (){
+    public Optional<Video> findNextInNew (){
         return Optional.ofNullable(readyToEncode.removeFirst());
     }
 
