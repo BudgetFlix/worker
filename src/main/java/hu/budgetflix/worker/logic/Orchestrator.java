@@ -18,7 +18,7 @@ public class Orchestrator {
     private final Observer observer;
 
     private CompletableFuture<JobResult> currentJob = null;
-    private  Optional<Video> currentProcessingVideo;
+    private Optional<Video> currentProcessingVideo;
 
     public Orchestrator(FileMover mover, FfmpegRunner runner, Observer observer1) {
         this.mover = mover;
@@ -38,39 +38,37 @@ public class Orchestrator {
                 continue;
             }
 
-             currentProcessingVideo = observer.findNextInNew();
-            if (currentProcessingVideo.isPresent()) {
-                try {
-                    currentProcessingVideo.get().setPath(mover.moveNewToProcessing(currentProcessingVideo.get().getPath()));
-                    Out.log("success moving");
+            currentProcessingVideo = observer.findNextInNew();
+            if (currentProcessingVideo.isEmpty()) break;
 
-                    List<String> cmd = buildFfmpegCmd(currentProcessingVideo);
+            try {
+                Video video = currentProcessingVideo.get();
 
-                    Out.log("start ffmpeg | " + currentProcessingVideo.get().toString());
+                video.setPath(mover.moveNewToProcessing(video.getPath()));
+                Out.log("success moving");
 
-                    Path out = Path.of("/srv/media/library/" + currentProcessingVideo.get().getId() + "/hls/");
-                    Files.createDirectories(out);
-                    currentJob = runner.start(cmd);
+                Path outDir = Path.of("/srv/media/library/", video.getId().toString(), "/hls");
+                Files.createDirectories(outDir);
 
-                } catch (Exception e) {
-                    Out.log("in orhestator" + e.getMessage());
-                }
+                List<String> cmd = buildFfmpegCmd(video,outDir);
 
-                continue;
+                Out.log("start ffmpeg | " + currentProcessingVideo.get().toString());
+                currentJob = runner.start(cmd);
+
+            } catch (Exception e) {
+                Out.log("in orchestrator" + e.getMessage());
             }
-
-            break;
         }
+
 
     }
 
-    private List<String> buildFfmpegCmd(Optional<Video> video) {
-        if(video.isEmpty()) return List.of();
-        Path out = Path.of("/srv/media/library/" + video.get().getId() + "/hls/");
+
+    private List<String> buildFfmpegCmd(Video video,Path outDir) {
         return List.of(
                 "ffmpeg",
                 "-y",
-                "-i", video.get().getPath().toString(),
+                "-i", video.getPath().toString(),
 
                 "-map", "0:v:0",
                 "-map", "0:a:0",
@@ -90,9 +88,8 @@ public class Orchestrator {
                 "-hls_time", "6",
                 "-hls_playlist_type", "vod",
                 "-hls_segment_filename",
-                out + "seg_%03d.ts",
-
-                out + "index.m3u8"
+                outDir.resolve("/seg_%03d.ts").toString(),
+                outDir.resolve("/index.m3u8").toString()
         );
     }
 
