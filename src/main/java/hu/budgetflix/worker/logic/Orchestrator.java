@@ -38,13 +38,20 @@ public class Orchestrator {
 
             Optional<Path> next = observer.findNextInNew();
             if (next.isPresent()) {
-                Out.log("start ffmpeg | " + currentProcessingFile);
+                Path moved;
+                try {
+                    moved = mover.moveNewToProcessing(next.get());
+                    currentProcessingFile = moved;
 
-                Path moved = mover.moveNewToProcessing(next.get());
-                currentProcessingFile = moved;
+                    List<String> cmd = buildFfmpegCmd(moved);
 
-                List<String> cmd = buildFfmpegCmd(moved);
-                currentJob = runner.start(cmd);
+                    Out.log("start ffmpeg | " + currentProcessingFile);
+                    currentJob = runner.start(cmd);
+
+                } catch (Exception e) {
+                    Out.log(e.getMessage());
+                }
+
                 continue;
             }
 
@@ -55,11 +62,37 @@ public class Orchestrator {
 
     private List<String> buildFfmpegCmd(Path in) {
         Path out = in.resolveSibling(in.getFileName().toString() + ".mp4");
-        return List.of("ffmpeg", "-y", "-i", in.toString(), out.toString());
+        return List.of(
+                "ffmpeg",
+                "-y",
+                "-i", "/srv/media/inbox/process/movie.mp4",
+
+                "-map", "0:v:0",
+                "-map", "0:a:0",
+
+                "-c:v", "libx264",
+                "-preset", "veryfast",
+                "-profile:v", "main",
+                "-level", "4.0",
+                "-pix_fmt", "yuv420p",
+                "-crf", "20",
+
+                "-c:a", "aac",
+                "-b:a", "128k",
+                "-ac", "2",
+
+                "-f", "hls",
+                "-hls_time", "6",
+                "-hls_playlist_type", "vod",
+                "-hls_segment_filename",
+                "/srv/media/library/UUID/hls/seg_%03d.ts",
+
+                "/srv/media/library/UUID/hls/index.m3u8"
+        );
     }
 
     private void onJobFinished(JobResult r) throws IOException {
-        if(r.success()){
+        if (r.success()) {
             mover.moveProcessingToDone(currentProcessingFile);
         } else {
             //mover.writeErrorLog(currentProcessingFile,r.exitCode(),r.exitCode());
