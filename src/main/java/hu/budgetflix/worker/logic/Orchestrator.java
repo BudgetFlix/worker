@@ -56,7 +56,7 @@ public class Orchestrator {
                 currentJob = runner.start(cmd);
 
             } catch (Exception e) {
-                Out.log("in orchestrator" + e.getMessage());
+                Out.log("in orchestrator" + e + e.getMessage());
             }
         }
 
