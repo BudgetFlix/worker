@@ -19,10 +19,13 @@ public class Main {
         FfmpegRunner runner = new FfmpegRunner();
         Observer observer = new Observer();
 
-        Orchestrator orchestrator = new Orchestrator(mover,runner, observer);
+        Orchestrator orchestrator = new Orchestrator(mover, runner, observer);
 
         starter.scheduleAtFixedRate(() -> {
-            if(observer.readyCount() > 0 ){
+
+            System.out.println(observer.readyCount());
+
+            if (observer.readyCount() > 0) {
                 try {
                     System.out.println("in progres");
                     orchestrator.runOnceUntilIdle();
@@ -31,8 +34,7 @@ public class Main {
                 }
                 starter.shutdown();
             }
-        },0,5, TimeUnit.SECONDS);
-
+        }, 0, 5, TimeUnit.SECONDS);
 
 
     }

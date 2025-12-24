@@ -45,7 +45,7 @@ public class Observer {
             long now = System.currentTimeMillis();
 
             for (Path file : stream) {
-                System.out.println(file.getFileName());
+                System.out.println(file.getFileName()); // debug
                 if (!Files.isRegularFile(file)) continue;
 
                 FileState state = states.computeIfAbsent(
