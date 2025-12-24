@@ -1,6 +1,7 @@
 package hu.budgetflix.worker.logic;
 
 import hu.budgetflix.worker.model.JobResult;
+import hu.budgetflix.worker.view.Out;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,6 +18,7 @@ public class FfmpegRunner {
     private final ExecutorService ioPool = Executors.newCachedThreadPool();
 
     public CompletableFuture<JobResult> start(List<String> cmd) throws IOException {
+        Out.log("ffmepg is started");
         ProcessBuilder pb = new ProcessBuilder(cmd);
         pb.redirectErrorStream(false);
         Process p = pb.start();
@@ -50,6 +52,7 @@ public class FfmpegRunner {
             try {stderrReader.get(2, TimeUnit.SECONDS);}catch (Exception ignored){}
 
             String errTail = String.join("\n", tail);
+            Out.log(exit + " " +  errTail);
             return new JobResult(exit,errTail);
         });
         return finished;

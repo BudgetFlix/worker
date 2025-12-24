@@ -2,8 +2,9 @@ package hu.budgetflix.worker.view;
 
 public class Out {
 
-    public static void log (String message) {
-        System.out.println(System.currentTimeMillis() + " | " + message);
+    public static void log (String msg) {
+        System.out.printf("[%s] %s%n",
+                java.time.LocalDateTime.now(), msg);
     }
 
 }
