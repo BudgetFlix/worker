@@ -88,8 +88,8 @@ public class Orchestrator {
                 "-hls_time", "6",
                 "-hls_playlist_type", "vod",
                 "-hls_segment_filename",
-                outDir.resolve("/seg_%03d.ts").toString(),
-                outDir.resolve("/index.m3u8").toString()
+                outDir.resolve("seg_%03d.ts").toString(),
+                outDir.resolve("index.m3u8").toString()
         );
     }
 
