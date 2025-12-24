@@ -41,6 +41,7 @@ public class Orchestrator {
                 Path moved;
                 try {
                     moved = mover.moveNewToProcessing(next.get());
+                    Out.log("success moving");
                     currentProcessingFile = moved;
 
                     List<String> cmd = buildFfmpegCmd(moved);
@@ -65,13 +66,13 @@ public class Orchestrator {
         return List.of(
                 "ffmpeg",
                 "-y",
-                "-i", "/srv/media/inbox/process/movie.mp4",
+                "-i", in.toString(),
 
                 "-map", "0:v:0",
                 "-map", "0:a:0",
 
                 "-c:v", "libx264",
-                "-preset", "veryfast",
+                "-preset", "fast",
                 "-profile:v", "main",
                 "-level", "4.0",
                 "-pix_fmt", "yuv420p",
@@ -85,9 +86,9 @@ public class Orchestrator {
                 "-hls_time", "6",
                 "-hls_playlist_type", "vod",
                 "-hls_segment_filename",
-                "/srv/media/library/UUID/hls/seg_%03d.ts",
+                "/srv/media/library/test/hls/seg_%03d.ts",
 
-                "/srv/media/library/UUID/hls/index.m3u8"
+                "/srv/media/library/test/hls/index.m3u8"
         );
     }
 
