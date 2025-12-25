@@ -62,7 +62,8 @@ public class Orchestrator {
                 currentJob = runner.start(cmd);
 
             } catch (Exception e) {
-                Out.log("in orchestrator " + e);
+                Out.log("in orchestrator: ");
+                e.printStackTrace();
             }
         }
 
