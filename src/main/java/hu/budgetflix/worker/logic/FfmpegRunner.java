@@ -23,7 +23,7 @@ public class FfmpegRunner {
         pb.redirectErrorStream(false);
         Process p = pb.start();
 
-        int tailLines = 80;
+        int tailLines = 60;
         Deque<String> tail = new ArrayDeque<>(tailLines);
 
         Future<?> stderrReader = ioPool.submit(() -> {

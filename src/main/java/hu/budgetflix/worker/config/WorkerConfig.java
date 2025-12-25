@@ -15,4 +15,10 @@ public class WorkerConfig {
 
     public final static Path ERROR_DIR =
             Path.of(System.getenv().getOrDefault("ERROR_DIR", "/srv/media/inbox/error"));
+
+    public final static Path ERROR_LOG =
+            Path.of(System.getenv().getOrDefault("ERROR_LOG", "/srv/media/inbox/error/errorLog.txt"));
+
+    public final static Path DATA_BASE =
+            Path.of(System.getenv().getOrDefault("DATA_BASE", "/srv/backend/app.db"));
 }

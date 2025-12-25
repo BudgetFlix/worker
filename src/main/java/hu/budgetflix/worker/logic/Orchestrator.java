@@ -1,7 +1,9 @@
 package hu.budgetflix.worker.logic;
 
 import hu.budgetflix.worker.model.JobResult;
+import hu.budgetflix.worker.model.Status;
 import hu.budgetflix.worker.model.Video;
+import hu.budgetflix.worker.model.database.dao.MediaDao;
 import hu.budgetflix.worker.view.Out;
 
 import java.io.IOException;
@@ -16,47 +18,51 @@ public class Orchestrator {
     private final FileMover mover;
     private final FfmpegRunner runner;
     private final Observer observer;
+    private MediaDao dao;
 
     private CompletableFuture<JobResult> currentJob = null;
     private Optional<Video> currentProcessingVideo;
 
-    public Orchestrator(FileMover mover, FfmpegRunner runner, Observer observer1) {
+    public Orchestrator(FileMover mover, FfmpegRunner runner, Observer observer1, MediaDao dao) {
         this.mover = mover;
         this.runner = runner;
         this.observer = observer1;
+        this.dao = dao;
     }
 
-    public void runOnceUntilIdle() throws Exception {
+    public void runOnceUntilIdle() {
 
         while (true) {
 
-
-            if (currentJob != null) {
-                Out.log("ffmpeg is in progress");
-                JobResult r = waitingForProcessingFinish();
-                onJobFinished(r);
-                continue;
-            }
-
-            currentProcessingVideo = observer.findNextInNew();
-            if (currentProcessingVideo.isEmpty()) break;
-
             try {
+
+                if (currentJob != null) {
+                    Out.log("ffmpeg is in progress");
+                    JobResult r = waitingForProcessingFinish();
+                    onJobFinished(r);
+                    continue;
+                }
+
+                currentProcessingVideo = observer.findNextInNew();
+                if (currentProcessingVideo.isEmpty()) break;
+
                 Video video = currentProcessingVideo.get();
 
                 video.setPath(mover.moveNewToProcessing(video.getPath()));
                 Out.log("success moving");
 
-                Path outDir = Path.of("/srv/media/library/", video.getId().toString(), "/hls");
+                Path outDir = Path.of("/srv/media/library/", video.getId().toString(), "hls");
                 Files.createDirectories(outDir);
 
-                List<String> cmd = buildFfmpegCmd(video,outDir);
 
-                Out.log("start ffmpeg | " + currentProcessingVideo.get().toString());
+                List<String> cmd = buildFfmpegCmd(video, outDir);
+
+                Out.log("start ffmpeg | " + currentProcessingVideo.get());
+                dao.addNewMedia(currentProcessingVideo.get(), outDir);
                 currentJob = runner.start(cmd);
 
             } catch (Exception e) {
-                Out.log("in orchestrator" + e + e.getMessage());
+                Out.log("in orchestrator " + e);
             }
         }
 
@@ -64,7 +70,7 @@ public class Orchestrator {
     }
 
 
-    private List<String> buildFfmpegCmd(Video video,Path outDir) {
+    private List<String> buildFfmpegCmd(Video video, Path outDir) {
         return List.of(
                 "ffmpeg",
                 "-y",
@@ -95,9 +101,15 @@ public class Orchestrator {
 
     private void onJobFinished(JobResult r) throws IOException {
         if (r.success()) {
+            currentProcessingVideo.orElseThrow().setStatus(Status.DONE);
+            dao.updateStatus(currentProcessingVideo.orElseThrow());
+
             mover.moveProcessingToDone(currentProcessingVideo.orElseThrow().getPath());
         } else {
-            //mover.writeErrorLog(currentProcessingFile,r.exitCode(),r.exitCode());
+            currentProcessingVideo.orElseThrow().setStatus(Status.ERROR);
+            dao.updateStatus(currentProcessingVideo.orElseThrow());
+
+            Out.writeErrorLog(currentProcessingVideo, r.exitCode(), r.errorTail());
             mover.moveProcessingToError(currentProcessingVideo.orElseThrow().getPath());
         }
         currentJob = null;

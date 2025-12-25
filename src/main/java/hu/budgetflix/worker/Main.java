@@ -4,13 +4,17 @@ import hu.budgetflix.worker.logic.FfmpegRunner;
 import hu.budgetflix.worker.logic.FileMover;
 import hu.budgetflix.worker.logic.Observer;
 import hu.budgetflix.worker.logic.Orchestrator;
+import hu.budgetflix.worker.model.database.dao.MediaDao;
+import hu.budgetflix.worker.model.database.dao.MediaDaoJdbc;
+import hu.budgetflix.worker.model.database.manager.MediaDBManager;
+import hu.budgetflix.worker.view.Out;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
         ScheduledExecutorService starter = Executors.newSingleThreadScheduledExecutor();
         System.out.println("hello worker");
@@ -19,7 +23,10 @@ public class Main {
         FfmpegRunner runner = new FfmpegRunner();
         Observer observer = new Observer();
 
-        Orchestrator orchestrator = new Orchestrator(mover, runner, observer);
+        MediaDBManager manager = new MediaDBManager();
+        MediaDao dao = new MediaDaoJdbc(manager.getDataSource());
+
+        Orchestrator orchestrator = new Orchestrator(mover, runner, observer,dao);
 
         starter.scheduleAtFixedRate(() -> {
 
@@ -30,7 +37,7 @@ public class Main {
                     System.out.println("in progres");
                     orchestrator.runOnceUntilIdle();
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    Out.log(e.toString());
                 }
                 starter.shutdown();
             }

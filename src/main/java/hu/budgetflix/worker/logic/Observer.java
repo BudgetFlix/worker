@@ -1,10 +1,11 @@
 package hu.budgetflix.worker.logic;
 
 import hu.budgetflix.worker.config.WorkerConfig;
+import hu.budgetflix.worker.model.Status;
 import hu.budgetflix.worker.model.Video;
 import hu.budgetflix.worker.view.Out;
 
-import java.io.File;
+
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -42,9 +43,6 @@ public class Observer {
 
         Out.log("observer is running");
 
-        if(allFilesDownloaded()){
-            watchingDownloaderFile.shutdown();
-        }
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(WorkerConfig.NEW_DIR)) {
             long now = System.currentTimeMillis();
 
@@ -65,7 +63,7 @@ public class Observer {
                     }
 
                     if (now - state.stableSince >= 10) {
-                        readyToEncode.addLast(new Video(file));
+                        readyToEncode.addLast(new Video(file,file.getFileName().toString(), Status.PROCESS));
                         states.remove(file);
                     }
                 } else {
@@ -74,17 +72,18 @@ public class Observer {
                     state.stableSince = 0;
                 }
             }
-
             states.keySet().removeIf(p -> !Files.exists(p));
+
+            if(states.isEmpty()){
+                watchingDownloaderFile.shutdown();
+            }
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private boolean allFilesDownloaded() {
-        return readyToEncode.size() == Objects.requireNonNull(new File(WorkerConfig.NEW_DIR.toUri()).listFiles()).length;
-    }
+
 
     public Optional<Video> findNextInNew (){
         return Optional.ofNullable(readyToEncode.removeFirst());
