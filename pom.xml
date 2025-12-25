@@ -27,17 +27,30 @@
         <finalName>worker</finalName>
 
         <plugins>
+            <!-- FAT JAR: minden dependency belekerül (sqlite-jdbc is) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.3.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>hu.budgetflix.worker.Main</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <!-- ne hozzon létre dependency-reduced-pom.xml-t -->
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+
+                            <!-- Main-Class beírása a MANIFEST.MF-be -->
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>hu.budgetflix.worker.Main</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
