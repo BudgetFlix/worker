@@ -19,7 +19,7 @@ public class MediaDaoJdbc implements MediaDao {
 
     @Override
     public void addNewMedia(Video vide, Path out) {
-            String sql = "INSERT INTO movie (id, title,original_filename,status,hls_patch,created_at) VALUES (?,?,?,?,?,?)";
+            String sql = "INSERT INTO movie (id, title,original_filename,status,hls_path,created_at) VALUES (?,?,?,?,?,?)";
         try (Connection connection = dataSource.getConnection()) {
             PreparedStatement st = connection.prepareStatement(sql);
 
