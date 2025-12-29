@@ -16,7 +16,7 @@ public class Out {
     }
 
 
-    public static void writeErrorLog(Video currentProcessingVideo, int i, String msg) {
+    public static void writeErrorLog(Video currentProcessingVideo, String msg) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(WorkerConfig.ERROR_LOG.toFile(),true))) {
 
 
@@ -32,7 +32,6 @@ public class Out {
             errorLog.append(System.lineSeparator());
             errorLog.append("-".repeat(10));
             errorLog.append(System.lineSeparator());
-            errorLog.append("exit code: "); errorLog.append(i);
             errorLog.append(System.lineSeparator());
             errorLog.append("-".repeat(10));
             errorLog.append(System.lineSeparator());

@@ -73,7 +73,7 @@ public class Orchestrator {
     private void moveToError(Video video, Throwable exception) throws IOException {
         video.setStatus(Status.ERROR);
         dao.updateStatus(video);
-        //Out.writeErrorLog(video,exception.toString());
+        Out.writeErrorLog(video,exception.toString());
         mover.moveProcessingToError(video.getPath());
 
     }
