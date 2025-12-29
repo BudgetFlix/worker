@@ -39,4 +39,9 @@ public class Video {
     public void setStatus(Status status) {
         this.status = status;
     }
+
+    @Override
+    public String toString () {
+         return path.toString() + name + status.toString();
+    }
 }

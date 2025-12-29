@@ -16,9 +16,9 @@ public class Out {
     }
 
 
-    public static void writeErrorLog(Optional<Video> currentProcessingVideo, int i, String msg) {
+    public static void writeErrorLog(Video currentProcessingVideo, int i, String msg) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(WorkerConfig.ERROR_LOG.toFile(),true))) {
-            if(currentProcessingVideo.isEmpty()) return;
+
 
             StringBuilder errorLog = new StringBuilder();
 
@@ -28,7 +28,7 @@ public class Out {
             errorLog.append(System.lineSeparator());
             errorLog.append("-".repeat(10));
             errorLog.append(System.lineSeparator());
-            errorLog.append("Current video path: "); errorLog.append(currentProcessingVideo.get().getPath());
+            errorLog.append("Current video path: "); errorLog.append(currentProcessingVideo.getPath());
             errorLog.append(System.lineSeparator());
             errorLog.append("-".repeat(10));
             errorLog.append(System.lineSeparator());

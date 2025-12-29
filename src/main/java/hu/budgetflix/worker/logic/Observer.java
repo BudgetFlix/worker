@@ -6,6 +6,7 @@ import hu.budgetflix.worker.model.Video;
 import hu.budgetflix.worker.view.Out;
 
 
+import javax.swing.plaf.nimbus.State;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -18,15 +19,19 @@ class FileState {
     long lastSize;
     long lastMtime;
     long stableSince;
+    boolean submitted = false;
 }
 
 public class Observer {
     Map<Path, FileState> states = new ConcurrentHashMap<>();
-    Deque<Video> readyToEncode = new ConcurrentLinkedDeque<>();
     ScheduledExecutorService watchingDownloaderFile = Executors.newSingleThreadScheduledExecutor();
+    private final Orchestrator orchestrator;
+    private final CompletableFuture<Void> finished =
+            new CompletableFuture<>();
 
 
-    public Observer () {
+    public Observer (Orchestrator orchestrator1) {
+        this.orchestrator = orchestrator1;
         setup();
     }
 
@@ -35,8 +40,8 @@ public class Observer {
                 this::tick,0,5, TimeUnit.SECONDS);
     }
 
-    public int readyCount() {
-        return readyToEncode.size();
+    public CompletableFuture<Void> finished() {
+        return finished;
     }
 
     void tick() {
@@ -62,9 +67,9 @@ public class Observer {
                         state.stableSince = now;
                     }
 
-                    if (now - state.stableSince >= 10) {
-                        readyToEncode.addLast(new Video(file,file.getFileName().toString(), Status.PROCESS));
-                        states.remove(file);
+                    if (now - state.stableSince >= 20_000 && !state.submitted) {
+                        orchestrator.submit(new Video(file,file.getFileName().toString(), Status.PROCESS));
+                        state.submitted = true;
                     }
                 } else {
                     state.lastSize = size;
@@ -74,8 +79,9 @@ public class Observer {
             }
             states.keySet().removeIf(p -> !Files.exists(p));
 
-            if(states.isEmpty()){
+            if(allstateIsSubmitted() && !finished.isDone()){
                 watchingDownloaderFile.shutdown();
+                finished.complete(null);
             }
 
         } catch (IOException e) {
@@ -83,10 +89,7 @@ public class Observer {
         }
     }
 
-
-
-    public Optional<Video> findNextInNew (){
-        return Optional.ofNullable(readyToEncode.removeFirst());
+    private boolean allstateIsSubmitted () {
+        return states.values().stream().allMatch(s -> s.submitted);
     }
-
 }

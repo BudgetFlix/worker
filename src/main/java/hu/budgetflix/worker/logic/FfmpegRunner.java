@@ -17,44 +17,51 @@ public class FfmpegRunner {
 
     private final ExecutorService ioPool = Executors.newCachedThreadPool();
 
-    public CompletableFuture<JobResult> start(List<String> cmd) throws IOException {
-        Out.log("ffmepg is started");
+    public void start(List<String> cmd) throws IOException {
+        Out.log("ffmpeg started");
+
         ProcessBuilder pb = new ProcessBuilder(cmd);
-        pb.redirectErrorStream(false);
         Process p = pb.start();
 
-        int tailLines = 60;
-        Deque<String> tail = new ArrayDeque<>(tailLines);
+        Deque<String> tail = new ArrayDeque<>(60);
 
         Future<?> stderrReader = ioPool.submit(() -> {
             try (BufferedReader br = new BufferedReader(
                     new InputStreamReader(p.getErrorStream(), StandardCharsets.UTF_8))) {
                 String line;
-                while ((line = br.readLine()) != null){
-                    if(tail.size() == tailLines) tail.removeFirst();
+                while ((line = br.readLine()) != null) {
+                    if (tail.size() == 60) tail.removeFirst();
                     tail.addLast(line);
                 }
-            } catch (IOException ignored) {
-            }
+            } catch (IOException ignored) {}
         });
 
         Future<?> stdoutReader = ioPool.submit(() -> {
-            try(InputStream in = p.getInputStream()){
+            try (InputStream in = p.getInputStream()) {
                 byte[] buf = new byte[8192];
-                while (in.read(buf) != -1){/*none*/}
-            }catch (IOException ignored){}
+                while (in.read(buf) != -1) {}
+            } catch (IOException ignored) {}
         });
 
-        CompletableFuture<JobResult> finished = p.onExit().thenApply(process -> {
-            int exit = process.exitValue();
+        int exit;
+        try {
+            exit = p.waitFor();
+            stderrReader.get(2, TimeUnit.SECONDS);
+            stdoutReader.get(2, TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new RuntimeException("ffmpeg I/O handling failed", e);
+        }
 
-            try {stdoutReader.get(2, TimeUnit.SECONDS);}catch (Exception ignored){}
-            try {stderrReader.get(2, TimeUnit.SECONDS);}catch (Exception ignored){}
-
+        if (exit != 0) {
             String errTail = String.join("\n", tail);
-            Out.log(exit + " " +  errTail);
-            return new JobResult(exit,errTail);
-        });
-        return finished;
+            throw new RuntimeException("ffmpeg failed (exit=" + exit + ")\n" + errTail);
+        }
+
+        Out.log("ffmpeg finished OK");
     }
+
+    public void shutdown() {
+        ioPool.shutdown();
+    }
+
 }
