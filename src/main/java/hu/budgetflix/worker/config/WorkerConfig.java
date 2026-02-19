@@ -21,4 +21,10 @@ public class WorkerConfig {
 
     public final static Path DATA_BASE =
             Path.of(System.getenv().getOrDefault("DATA_BASE", "/srv/backend/app.db"));
+
+    public final static Path MOVIE_SOURCE =
+            Path.of(System.getenv().getOrDefault("DATA_BASE", "/srv/media/library/movies"));
+
+    public final static Path SERIES_SOURCE =
+            Path.of(System.getenv().getOrDefault("DATA_BASE", "/srv/media/library/series"));
 }

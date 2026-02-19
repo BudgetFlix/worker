@@ -1,10 +1,9 @@
 package hu.budgetflix.worker.model.database.dao;
 
-import hu.budgetflix.worker.model.Video;
-
-import java.nio.file.Path;
+import hu.budgetflix.worker.model.media.Movie;
 
 public interface MediaDao {
-    void addNewMedia (Video vide, Path out);
-    void updateStatus(Video vide);
+    Long addNewMedia (Movie movie);
+    void updatePatch (Movie movie);
+    void updateStatus(Movie movie);
 }

@@ -1,12 +1,11 @@
 package hu.budgetflix.worker.view;
 
 import hu.budgetflix.worker.config.WorkerConfig;
-import hu.budgetflix.worker.model.Video;
+import hu.budgetflix.worker.model.media.Movie;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Optional;
 
 public class Out {
 
@@ -16,7 +15,7 @@ public class Out {
     }
 
 
-    public static void writeErrorLog(Video currentProcessingVideo, String msg) {
+    public static void writeErrorLog(Movie currentProcessingVideo, String msg) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(WorkerConfig.ERROR_LOG.toFile(),true))) {
 
 
@@ -28,7 +27,7 @@ public class Out {
             errorLog.append(System.lineSeparator());
             errorLog.append("-".repeat(10));
             errorLog.append(System.lineSeparator());
-            errorLog.append("Current video path: "); errorLog.append(currentProcessingVideo.getPath());
+            errorLog.append("Current video path: "); errorLog.append(currentProcessingVideo.getCurrentPath());
             errorLog.append(System.lineSeparator());
             errorLog.append("-".repeat(10));
             errorLog.append(System.lineSeparator());

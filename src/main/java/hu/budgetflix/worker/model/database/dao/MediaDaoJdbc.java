@@ -1,11 +1,11 @@
 package hu.budgetflix.worker.model.database.dao;
 
-import hu.budgetflix.worker.model.Video;
+import hu.budgetflix.worker.model.media.Movie;
 
 import javax.sql.DataSource;
-import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 
@@ -18,17 +18,38 @@ public class MediaDaoJdbc implements MediaDao {
 
 
     @Override
-    public void addNewMedia(Video vide, Path out) {
-            String sql = "INSERT INTO movie (id, title,original_filename,status,hls_path,created_at) VALUES (?,?,?,?,?,?)";
+    public Long addNewMedia(Movie movie) {
+            String sql = "INSERT INTO movie ( title,original_filename,status,created_at) VALUES (?,?,?,?) RETURNING id";
         try (Connection connection = dataSource.getConnection()) {
             PreparedStatement st = connection.prepareStatement(sql);
 
-            st.setString(1,vide.getId().toString());
-            st.setString(2, vide.getName());
-            st.setString(3, vide.getName());
-            st.setString(4, vide.getStatus().toString());
-            st.setString(5,out.resolve("index.m3u8").toString());
-            st.setString(6, LocalDateTime.now().toString());
+
+            st.setString(1, movie.getName());
+            st.setString(2, movie.getName());
+            st.setString(3, movie.getStatus().toString());
+            st.setString(4, LocalDateTime.now().toString());
+
+            st.executeUpdate();
+
+            ResultSet rs = st.getGeneratedKeys();
+            if(rs.next()){
+                return rs.getLong(1);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return (long) 0;
+    }
+
+    @Override
+    public void updatePatch(Movie movie) {
+        String sql = "UPDATE movie SET hls_path = ? WHERE id = ? ";
+        try (Connection con = dataSource.getConnection()) {
+            PreparedStatement st =  con.prepareStatement(sql);
+
+            st.setString(1,movie.getVideo().getOutPath().toString());
+            st.setLong(2,movie.getId());
 
             st.executeUpdate();
 
@@ -39,13 +60,13 @@ public class MediaDaoJdbc implements MediaDao {
     }
 
     @Override
-    public void updateStatus(Video vide) {
+    public void updateStatus(Movie movie) {
         String sql = "UPDATE movie SET status = ? WHERE id = ? ";
         try (Connection con = dataSource.getConnection()) {
             PreparedStatement st =  con.prepareStatement(sql);
 
-            st.setString(1,vide.getStatus().toString());
-            st.setString(2,vide.getId().toString());
+            st.setString(1,movie.getStatus().toString());
+            st.setLong(2,movie.getId());
 
             st.executeUpdate();
 

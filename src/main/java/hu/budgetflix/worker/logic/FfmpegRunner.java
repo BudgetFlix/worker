@@ -17,7 +17,7 @@ public class FfmpegRunner {
 
     private final ExecutorService ioPool = Executors.newCachedThreadPool();
 
-    public void start(List<String> cmd) throws IOException {
+    public JobResult start(List<String> cmd) throws IOException {
         Out.log("ffmpeg started");
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
@@ -54,10 +54,11 @@ public class FfmpegRunner {
 
         if (exit != 0) {
             String errTail = String.join("\n", tail);
-            throw new RuntimeException("ffmpeg failed (exit=" + exit + ")\n" + errTail);
+            return new JobResult(exit,errTail);
         }
 
         Out.log("ffmpeg finished OK");
+        return new JobResult(exit,"Is OK");
     }
 
     public void shutdown() {

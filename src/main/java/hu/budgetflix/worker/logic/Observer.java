@@ -1,37 +1,28 @@
 package hu.budgetflix.worker.logic;
 
 import hu.budgetflix.worker.config.WorkerConfig;
-import hu.budgetflix.worker.model.Status;
-import hu.budgetflix.worker.model.Video;
+import hu.budgetflix.worker.controller.EncodeController;
+import hu.budgetflix.worker.model.DirectoryState;
 import hu.budgetflix.worker.view.Out;
 
-
-import javax.swing.plaf.nimbus.State;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.*;
 
-class FileState {
-    long lastSize;
-    long lastMtime;
-    long stableSince;
-    boolean submitted = false;
-}
-
 public class Observer {
-    Map<Path, FileState> states = new ConcurrentHashMap<>();
+    Map<Path, DirectoryState> states = new ConcurrentHashMap<>();
     ScheduledExecutorService watchingDownloaderFile = Executors.newSingleThreadScheduledExecutor();
-    private final Orchestrator orchestrator;
+
     private final CompletableFuture<Void> finished =
             new CompletableFuture<>();
+    private final EncodeController encodeController;
 
 
-    public Observer (Orchestrator orchestrator1) {
-        this.orchestrator = orchestrator1;
+    public Observer (EncodeController encodeController) {
+        this.encodeController = encodeController;
         setup();
     }
 
@@ -49,32 +40,24 @@ public class Observer {
         Out.log("observer is running");
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(WorkerConfig.NEW_DIR)) {
-            long now = System.currentTimeMillis();
+
 
             for (Path file : stream) {
-                Out.log(file.toString()); // debug
-                if (!Files.isRegularFile(file)) continue;
+                Out.log(file.toString()); // debug-ra
+                if (!Files.isDirectory(file)) continue;
 
-                FileState state = states.computeIfAbsent(
-                        file, p -> new FileState()
+                DirectoryState state = states.computeIfAbsent(
+                        file, p -> new DirectoryState()
                 );
-                BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
-                long size = attr.size();
-                long mtime = attr.lastModifiedTime().toMillis();
 
-                if (size == state.lastSize && mtime == state.lastMtime) {
-                    if (state.stableSince == 0) {
-                        state.stableSince = now;
+                Path readyFile = isReadyToEncode(file);
+                if(readyFile != null && !state.isSubmitted()) {
+                    if (state.getStableSince() < 3) {
+                        state.setStableSince(state.getStableSince() + 1);
+                    }else{
+                        state.setSubmitted(true);
+                        encodeController.submit(file);
                     }
-
-                    if (now - state.stableSince >= 20_000 && !state.submitted) {
-                        orchestrator.submit(new Video(file,file.getFileName().toString(), Status.PROCESS));
-                        state.submitted = true;
-                    }
-                } else {
-                    state.lastSize = size;
-                    state.lastMtime = mtime;
-                    state.stableSince = 0;
                 }
             }
             states.keySet().removeIf(p -> !Files.exists(p));
@@ -90,6 +73,21 @@ public class Observer {
     }
 
     private boolean allstateIsSubmitted () {
-        return states.values().stream().allMatch(s -> s.submitted);
+        return states.values().stream().allMatch(DirectoryState::isSubmitted);
+    }
+
+    private Path isReadyToEncode(Path file) {
+        if(!Files.exists(file)) {
+            throw new RuntimeException("the given file is not exist");
+        }
+
+        String fileName = file.getFileName().toString();
+        int lastDot = fileName.lastIndexOf('.');
+        boolean hasExtension = lastDot > 0 && lastDot < fileName.length() - 1;
+
+        if(hasExtension &&  fileName.endsWith(".part")){
+            return null;
+        }
+        return file;
     }
 }
