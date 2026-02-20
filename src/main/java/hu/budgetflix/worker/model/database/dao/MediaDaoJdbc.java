@@ -29,7 +29,7 @@ public class MediaDaoJdbc implements MediaDao {
             st.setString(3, movie.getStatus().toString());
             st.setString(4, LocalDateTime.now().toString());
 
-            st.executeUpdate();
+            st.executeQuery();
 
             ResultSet rs = st.getGeneratedKeys();
             if(rs.next()){
