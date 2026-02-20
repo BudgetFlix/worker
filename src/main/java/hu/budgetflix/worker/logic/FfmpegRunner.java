@@ -2,7 +2,6 @@ package hu.budgetflix.worker.logic;
 
 import hu.budgetflix.worker.model.JobResult;
 import hu.budgetflix.worker.view.Out;
-import hu.budgetflix.worker.view.StatusConsole;
 
 import java.io.BufferedReader;
 import java.io.IOException;

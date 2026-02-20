@@ -57,14 +57,14 @@ public class Observer {
                         state.setStableSince(state.getStableSince() + 1);
                     }else{
                         state.setSubmitted(true);
-                        Out.log(file.toString() + " is submitted" );
+                        Out.log(file + " is submitted");
                         encodeController.submit(file);
                     }
                 }
             }
             states.keySet().removeIf(p -> !Files.exists(p));
 
-            if (allstateIsSubmitted()
+            if (states.isEmpty() || allstateIsSubmitted()
                     && encodeController.isIdle()
                     && !finished.isDone()) {
 
