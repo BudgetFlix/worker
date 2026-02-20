@@ -1,10 +1,12 @@
 package hu.budgetflix.worker.model;
 
 import java.util.HashMap;
+import java.util.UUID;
 
 public class Stat {
     private String name;
     private MediaType type;
+    private UUID id;
     private HashMap<Integer,String> videos;
 
     public Stat () {}
@@ -31,5 +33,13 @@ public class Stat {
 
     public void setVideos(HashMap<Integer, String> videos) {
         this.videos = videos;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
     }
 }
