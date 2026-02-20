@@ -19,29 +19,33 @@ public class MediaDaoJdbc implements MediaDao {
 
     @Override
     public Long addNewMedia(Movie movie) {
-            String sql = "INSERT INTO movie ( title,original_filename,status,created_at) VALUES (?,?,?,?) RETURNING id";
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement st = connection.prepareStatement(sql);
 
+        String sql = """
+        INSERT INTO movie (title, original_filename, status, created_at)
+        VALUES (?, ?, ?, ?)
+        RETURNING id
+        """;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement st = connection.prepareStatement(sql)) {
 
             st.setString(1, movie.getName());
             st.setString(2, movie.getName());
             st.setString(3, movie.getStatus().toString());
             st.setString(4, LocalDateTime.now().toString());
 
-            st.executeQuery();
-
-            ResultSet rs = st.getGeneratedKeys();
-            if(rs.next()){
-                return rs.getLong(1);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                }
             }
+
+            throw new SQLException("No ID returned");
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return (long) 0;
     }
-
     @Override
     public void updatePatch(Movie movie) {
         String sql = "UPDATE movie SET hls_path = ? WHERE id = ? ";
