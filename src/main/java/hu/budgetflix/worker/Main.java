@@ -24,7 +24,7 @@ public class Main {
         Observer observer = new Observer(controller);
 
         observer.finished()
-                .thenRun(controller::shutdownGracefully);
+                .thenRun(controller::shutdownGracefully)
+                .join();
     }
-
 }

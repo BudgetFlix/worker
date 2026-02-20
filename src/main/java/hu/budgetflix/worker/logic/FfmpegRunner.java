@@ -2,6 +2,7 @@ package hu.budgetflix.worker.logic;
 
 import hu.budgetflix.worker.model.JobResult;
 import hu.budgetflix.worker.view.Out;
+import hu.budgetflix.worker.view.StatusConsole;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,7 +18,8 @@ public class FfmpegRunner {
 
     private final ExecutorService ioPool = Executors.newCachedThreadPool();
 
-    public JobResult start(List<String> cmd) throws IOException {
+    public JobResult start(List<String> cmd,String filename) throws IOException {
+        StatusConsole.setCurrentFile(filename);
         Out.log("ffmpeg started");
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
@@ -48,15 +50,17 @@ public class FfmpegRunner {
             exit = p.waitFor();
             stderrReader.get(2, TimeUnit.SECONDS);
             stdoutReader.get(2, TimeUnit.SECONDS);
+
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new RuntimeException("ffmpeg I/O handling failed", e);
         }
 
         if (exit != 0) {
             String errTail = String.join("\n", tail);
+            StatusConsole.clearCurrentFile();
             return new JobResult(exit,errTail);
         }
-
+        StatusConsole.clearCurrentFile();
         Out.log("ffmpeg finished OK");
         return new JobResult(exit,"Is OK");
     }

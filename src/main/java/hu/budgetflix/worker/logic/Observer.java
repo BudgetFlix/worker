@@ -4,6 +4,7 @@ import hu.budgetflix.worker.config.WorkerConfig;
 import hu.budgetflix.worker.controller.EncodeController;
 import hu.budgetflix.worker.model.DirectoryState;
 import hu.budgetflix.worker.view.Out;
+import hu.budgetflix.worker.view.StatusConsole;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -37,7 +38,7 @@ public class Observer {
 
     void tick() {
 
-        Out.log("observer is running");
+        StatusConsole.setWatching(true);
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(WorkerConfig.NEW_DIR)) {
 
@@ -69,6 +70,7 @@ public class Observer {
                 Out.log("All encodes finished. Shutting down observer.");
 
                 watchingDownloaderFile.shutdown();
+                StatusConsole.setWatching(false);
                 finished.complete(null);
             }
 
