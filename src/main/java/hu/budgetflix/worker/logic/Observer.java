@@ -38,7 +38,7 @@ public class Observer {
 
     void tick() {
 
-        StatusConsole.setWatching(true);
+        Out.log("observer is running");
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(WorkerConfig.NEW_DIR)) {
 
@@ -57,6 +57,7 @@ public class Observer {
                         state.setStableSince(state.getStableSince() + 1);
                     }else{
                         state.setSubmitted(true);
+                        Out.log(file.toString() + " is submitted" );
                         encodeController.submit(file);
                     }
                 }
@@ -68,9 +69,7 @@ public class Observer {
                     && !finished.isDone()) {
 
                 Out.log("All encodes finished. Shutting down observer.");
-
                 watchingDownloaderFile.shutdown();
-                StatusConsole.setWatching(false);
                 finished.complete(null);
             }
 
