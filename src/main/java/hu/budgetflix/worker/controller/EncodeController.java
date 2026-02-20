@@ -9,10 +9,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class EncodeController {
+
+    private final AtomicInteger runningJobs = new AtomicInteger(0);
 
     private final ExecutorService executor =
             Executors.newSingleThreadExecutor();
@@ -26,15 +28,18 @@ public class EncodeController {
     }
 
     public boolean isIdle() {
-        ThreadPoolExecutor pool =
-                (ThreadPoolExecutor) executor;
-
-        return pool.getQueue().isEmpty()
-                && pool.getActiveCount() == 0;
+        return runningJobs.get() == 0;
     }
 
     public void submit(Path directory) {
-        executor.submit(() -> process(directory));
+        runningJobs.incrementAndGet();
+        executor.submit(() -> {
+            try {
+                process(directory);
+            } finally {
+                runningJobs.decrementAndGet();
+            }
+        });
     }
 
     private void process(Path directory) {
