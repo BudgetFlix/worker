@@ -84,9 +84,8 @@ public class Observer {
     }
 
     private boolean allstateIsSubmitted() {
-        return !states.isEmpty() &&
-                states.values().stream()
-                        .allMatch(DirectoryState::isSubmitted);
+        return states.values().stream()
+                .allMatch(DirectoryState::isSubmitted);
     }
 
 
