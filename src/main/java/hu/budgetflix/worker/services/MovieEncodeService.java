@@ -59,7 +59,7 @@ public class MovieEncodeService implements EncodeService {
 
         JobResult result;
         try {
-            result = runner.start(cmd);
+            result = runner.start(cmd,movie.getVideo().getCurrentPath().getFileName().toString());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
