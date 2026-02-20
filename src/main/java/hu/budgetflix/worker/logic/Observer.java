@@ -44,12 +44,17 @@ public class Observer {
 
 
             for (Path file : stream) {
-                Out.log(file.toString()); // debug-ra
+                file = file.toAbsolutePath().normalize();
+
+
                 if (!Files.isDirectory(file)) continue;
 
                 DirectoryState state = states.computeIfAbsent(
                         file, p -> new DirectoryState()
                 );
+
+                Out.log("stableSince: " + state.getStableSince()+ " " + file.getFileName());
+                Out.log("submitted: " + state.isSubmitted()+ " " + file.getFileName());
 
                 Path readyFile = isReadyToEncode(file);
                 if(readyFile != null && !state.isSubmitted()) {
@@ -64,7 +69,7 @@ public class Observer {
             }
             states.keySet().removeIf(p -> !Files.exists(p));
 
-            if (states.isEmpty() || allstateIsSubmitted()
+            if (allstateIsSubmitted()
                     && encodeController.isIdle()
                     && !finished.isDone()) {
 
