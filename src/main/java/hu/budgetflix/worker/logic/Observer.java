@@ -62,7 +62,12 @@ public class Observer {
             }
             states.keySet().removeIf(p -> !Files.exists(p));
 
-            if(allstateIsSubmitted() && !finished.isDone()){
+            if (allstateIsSubmitted()
+                    && encodeController.isIdle()
+                    && !finished.isDone()) {
+
+                Out.log("All encodes finished. Shutting down observer.");
+
                 watchingDownloaderFile.shutdown();
                 finished.complete(null);
             }
@@ -72,9 +77,12 @@ public class Observer {
         }
     }
 
-    private boolean allstateIsSubmitted () {
-        return states.values().stream().allMatch(DirectoryState::isSubmitted);
+    private boolean allstateIsSubmitted() {
+        return !states.isEmpty() &&
+                states.values().stream()
+                        .allMatch(DirectoryState::isSubmitted);
     }
+
 
     private Path isReadyToEncode(Path file) {
         if(!Files.exists(file)) {

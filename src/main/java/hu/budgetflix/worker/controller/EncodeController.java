@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class EncodeController {
@@ -22,6 +23,14 @@ public class EncodeController {
     public EncodeController(EncodeServiceFactory factory, FfmpegRunner runner) {
         this.factory = factory;
         this.runner = runner;
+    }
+
+    public boolean isIdle() {
+        ThreadPoolExecutor pool =
+                (ThreadPoolExecutor) executor;
+
+        return pool.getQueue().isEmpty()
+                && pool.getActiveCount() == 0;
     }
 
     public void submit(Path directory) {
