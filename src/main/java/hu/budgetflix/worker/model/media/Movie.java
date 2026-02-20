@@ -63,7 +63,7 @@ public  class Movie {
     public void setOutPath(Path outPath) {
         if(canModifyTheOutPath){
             this.outPath = outPath;
-            video.setOutPath(currentPath.resolve(stat.getVideos().get(1) + "hls"));
+            video.setOutPath(currentPath.resolve(stat.getVideos().get(1) + "/hls"));
         }
     }
 
