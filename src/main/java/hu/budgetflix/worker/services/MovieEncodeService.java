@@ -67,15 +67,15 @@ public class MovieEncodeService implements EncodeService {
             return;
         }
 
-        if(status == Status.PROCESS){
+        if (status == Status.PROCESS) {
             //GC-torol minedt db-ben es localisan is
         }
 
-        List<String> cmd = FfmpegConfig.buildFfmpegCmd(currentVideo);
-
         JobResult result;
+
         try {
-            currentVideo.setCurrentPath(StatusExtension.renameWithStatus(currentVideo.getCurrentPath(),Status.PROCESS));
+            currentVideo.setCurrentPath(StatusExtension.renameWithStatus(currentVideo.getCurrentPath(), Status.PROCESS));
+            List<String> cmd = FfmpegConfig.buildFfmpegCmd(currentVideo);
             result = runner.start(cmd, currentVideo.getFileName());
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -91,31 +91,31 @@ public class MovieEncodeService implements EncodeService {
                 }
             } else {
                 try {
-                    failed(currentVideo,result);
+                    failed(currentVideo, result);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
         }
-        if(isShutDown){
+        if (isShutDown) {
             runner.shutdown();
         }
     }
 
     @Override
-    public void shutDown () {
+    public void shutDown() {
         isShutDown = true;
     }
 
-    private void success (Video currentVideo) throws IOException {
-        currentVideo.setCurrentPath(StatusExtension.renameWithStatus(currentVideo.getCurrentPath(),Status.DONE));
-        dao.updateStatus(movie.getId(),Status.DONE);
+    private void success(Video currentVideo) throws IOException {
+        currentVideo.setCurrentPath(StatusExtension.renameWithStatus(currentVideo.getCurrentPath(), Status.DONE));
+        dao.updateStatus(movie.getId(), Status.DONE);
         movie.setCurrentPath(FileMover.moveToDone(movie.getCurrentPath()));
     }
 
-    private void failed (Video currentVideo,JobResult result) throws IOException {
-        currentVideo.setCurrentPath(StatusExtension.renameWithStatus(currentVideo.getCurrentPath(),Status.ERROR));
-        dao.updateStatus(movie.getId(),Status.ERROR);
+    private void failed(Video currentVideo, JobResult result) throws IOException {
+        currentVideo.setCurrentPath(StatusExtension.renameWithStatus(currentVideo.getCurrentPath(), Status.ERROR));
+        dao.updateStatus(movie.getId(), Status.ERROR);
         movie.setCurrentPath(FileMover.moveToError(movie.getCurrentPath()));
         Out.writeErrorLog(movie, result.errorTail());
     }
