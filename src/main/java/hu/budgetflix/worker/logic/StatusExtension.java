@@ -4,6 +4,7 @@ import hu.budgetflix.worker.model.Status;
 
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -26,6 +27,21 @@ public class StatusExtension {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    public static Path findMatching(Path videoPath) throws IOException {
+        Path dir = videoPath.getParent();
+        String baseName = videoPath.getFileName().toString();
+
+        try (DirectoryStream<Path> stream =
+                     Files.newDirectoryStream(dir, baseName + "*")) {
+
+            for (Path entry : stream) {
+                return entry; // első találat
+            }
+        }
+
+        return null; // nincs találat
     }
 
 

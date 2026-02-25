@@ -40,7 +40,7 @@ public class MovieEncodeService implements EncodeService {
 
             String filename = stat.getVideos().get(1);
 
-            Video video = new Video(StatusExtension.renameWithStatus(directory.resolve(filename), Status.READY));
+            Video video = new Video(StatusExtension.renameWithStatus(StatusExtension.findMatching(directory.resolve(filename)), Status.READY));
 
             movie = new Movie(directory, stat, video);
 
