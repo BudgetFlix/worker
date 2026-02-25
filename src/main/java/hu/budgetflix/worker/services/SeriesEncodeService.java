@@ -20,8 +20,4 @@ public class SeriesEncodeService implements EncodeService {
 
     }
 
-    @Override
-    public void shutDown() {
-
-    }
 }
