@@ -4,12 +4,14 @@ import hu.budgetflix.worker.config.FfmpegConfig;
 import hu.budgetflix.worker.config.WorkerConfig;
 import hu.budgetflix.worker.logic.FfmpegRunner;
 import hu.budgetflix.worker.logic.FileMover;
+import hu.budgetflix.worker.logic.StatusExtension;
 import hu.budgetflix.worker.model.JobResult;
 import hu.budgetflix.worker.model.Stat;
 import hu.budgetflix.worker.model.Status;
 import hu.budgetflix.worker.model.database.JsonReader;
 import hu.budgetflix.worker.model.database.dao.MediaDao;
 import hu.budgetflix.worker.model.media.Movie;
+import hu.budgetflix.worker.model.media.Video;
 import hu.budgetflix.worker.view.Out;
 
 import java.io.IOException;
@@ -19,11 +21,11 @@ import java.util.List;
 
 public class MovieEncodeService implements EncodeService {
 
-
     private final MediaDao dao;
     private Movie movie;
+    private boolean isShutDown = false;
 
-    private FfmpegRunner runner;
+    private final FfmpegRunner runner;
 
     public MovieEncodeService(MediaDao dao, FfmpegRunner runner) {
         this.dao = dao;
@@ -33,57 +35,90 @@ public class MovieEncodeService implements EncodeService {
     @Override
     public void buildUpStructure(Path directory) {
         try {
+            movie.setCurrentPath(FileMover.moveToProcessing(movie.getCurrentPath()));
 
-        Stat stat = JsonReader.jsonToObject(directory);
-        movie = new Movie(directory, stat);
-        long id = dao.addNewMedia(movie);
-        Path outPath = WorkerConfig.MOVIE_SOURCE.resolve(Long.toString(id));
-        movie.setId(id);
-        movie.setOutPath(outPath);
-        dao.updatePatch(movie);
-        Files.createDirectories(movie.getVideo().getOutPath());
+            Stat stat = JsonReader.jsonToObject(directory);
 
-        movie.setCurrentPath(FileMover.moveNewToProcessing(movie.getCurrentPath()));
+            String filename = stat.getVideos().get(1);
 
+            Video video = new Video(StatusExtension.renameWithStatus(directory.resolve(filename), Status.READY));
+
+            movie = new Movie(directory, stat, video);
+
+            long id = dao.addNewMedia(movie);
+            movie.setId(id);
+
+            Path outPath = WorkerConfig.MOVIE_SOURCE.resolve(Long.toString(id));
+            movie.setOutPath(outPath);
+
+            dao.updateOutPatch(movie);
+            Files.createDirectories(movie.getVideo().getOutPath());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-
     }
 
     @Override
     public void startEncode() {
-        List<String> cmd = FfmpegConfig.buildFfmpegCmd(movie.getVideo());
+        Video currentVideo = movie.getVideo();
+        Status status = StatusExtension.getStatusExtension(currentVideo.getCurrentPath());
+
+        if (status != Status.PROCESS && status != Status.READY) {
+            return;
+        }
+
+        if(status == Status.PROCESS){
+            //GC-torol minedt db-ben es localisan is
+        }
+
+        List<String> cmd = FfmpegConfig.buildFfmpegCmd(currentVideo);
 
         JobResult result;
         try {
-            result = runner.start(cmd,movie.getVideo().getCurrentPath().getFileName().toString());
+            currentVideo.setCurrentPath(StatusExtension.renameWithStatus(currentVideo.getCurrentPath(),Status.PROCESS));
+            result = runner.start(cmd, currentVideo.getFileName());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        if(result != null) {
+        if (result != null) {
 
-        if (result.success()){ // athidalni statuszt a movi-re is
+            if (result.success()) {
                 try {
-                    movie.setStatus(Status.DONE);
-                    dao.updateStatus(movie);
-                    movie.setCurrentPath( FileMover.moveProcessingToDone(movie.getCurrentPath()));
+                    success(currentVideo);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }else {
+            } else {
                 try {
-                    movie.setStatus(Status.ERROR);
-                    dao.updateStatus(movie);
-                    movie.setCurrentPath( FileMover.moveProcessingToError(movie.getCurrentPath()));
-                    Out.writeErrorLog(movie,result.errorTail());
+                    failed(currentVideo,result);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
         }
+        if(isShutDown){
+            runner.shutdown();
+        }
     }
+
+    @Override
+    public void shutDown () {
+        isShutDown = true;
+    }
+
+    private void success (Video currentVideo) throws IOException {
+        currentVideo.setCurrentPath(StatusExtension.renameWithStatus(currentVideo.getCurrentPath(),Status.DONE));
+        dao.updateStatus(movie.getId(),Status.DONE);
+        movie.setCurrentPath(FileMover.moveToDone(movie.getCurrentPath()));
+    }
+
+    private void failed (Video currentVideo,JobResult result) throws IOException {
+        currentVideo.setCurrentPath(StatusExtension.renameWithStatus(currentVideo.getCurrentPath(),Status.ERROR));
+        dao.updateStatus(movie.getId(),Status.ERROR);
+        movie.setCurrentPath(FileMover.moveToError(movie.getCurrentPath()));
+        Out.writeErrorLog(movie, result.errorTail());
+    }
+
 
 }

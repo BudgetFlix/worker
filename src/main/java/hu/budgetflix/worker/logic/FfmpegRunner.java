@@ -18,6 +18,7 @@ public class FfmpegRunner {
     private final ExecutorService ioPool = Executors.newCachedThreadPool();
 
     public JobResult start(List<String> cmd,String filename) throws IOException {
+
         Out.log("ffmpeg started " + filename);
 
         ProcessBuilder pb = new ProcessBuilder(cmd);

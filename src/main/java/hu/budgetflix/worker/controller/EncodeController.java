@@ -1,6 +1,5 @@
 package hu.budgetflix.worker.controller;
 
-import hu.budgetflix.worker.logic.FfmpegRunner;
 import hu.budgetflix.worker.model.database.JsonReader;
 import hu.budgetflix.worker.factory.EncodeServiceFactory;
 import hu.budgetflix.worker.model.MediaType;
@@ -10,35 +9,23 @@ import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class EncodeController {
-
-    private final AtomicInteger runningJobs = new AtomicInteger(0);
 
     private final ExecutorService executor =
             Executors.newSingleThreadExecutor();
 
     private final EncodeServiceFactory factory;
-    private FfmpegRunner runner;
+    private volatile boolean shuttingDown = false;
 
-    public EncodeController(EncodeServiceFactory factory, FfmpegRunner runner) {
+    public EncodeController(EncodeServiceFactory factory) {
         this.factory = factory;
-        this.runner = runner;
-    }
-
-    public boolean isIdle() {
-        return runningJobs.get() == 0;
     }
 
     public void submit(Path directory) {
-        runningJobs.incrementAndGet();
         executor.submit(() -> {
-            try {
-                process(directory);
-            } finally {
-                runningJobs.decrementAndGet();
-            }
+            if(shuttingDown) return;
+            process(directory);
         });
     }
 
@@ -51,6 +38,9 @@ public class EncodeController {
 
             service.buildUpStructure(directory);
             service.startEncode();
+            if(shuttingDown){
+                service.shutDown();
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -64,14 +54,15 @@ public class EncodeController {
         }
     }
 
-    public void shutdownGracefully() {
+
+    public void shutdown() {
+        shuttingDown = true;
         executor.shutdown();
         try {
-            executor.awaitTermination(1, TimeUnit.HOURS);
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        runner.shutdown();
     }
 }
 

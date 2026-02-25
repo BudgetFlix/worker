@@ -1,7 +1,6 @@
 package hu.budgetflix.worker.model.media;
 
 import hu.budgetflix.worker.model.Stat;
-import hu.budgetflix.worker.model.Status;
 
 import java.nio.file.Path;
 
@@ -11,16 +10,14 @@ public  class Movie {
     private  Path outPath;
     private final String name;
     private final Video video;
-    private Status status;
     private final Stat stat;
     private boolean canModifyTheOutPath = true;
 
-    public Movie (Path currentPath, Stat stat) {
+    public Movie (Path currentPath, Stat stat, Video video) {
         this.currentPath = currentPath;
         this.name = stat.getName();
-        this.video = new Video(currentPath.resolve(stat.getVideos().get(1)));
+        this.video = video;
         this.stat = stat;
-        this.status = Status.PROCESS;
     }
 
     public long getId() {
@@ -33,7 +30,6 @@ public  class Movie {
 
     public void setCurrentPath(Path currentPath) {
         this.currentPath = currentPath;
-        video.setCurrentPath(currentPath.resolve(stat.getVideos().get(1)));
     }
 
     public Path getOutPath() {
@@ -48,22 +44,12 @@ public  class Movie {
         return video;
     }
 
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
-    public Stat getStat() {
-        return stat;
-    }
 
     public void setOutPath(Path outPath) {
         if(canModifyTheOutPath){
             this.outPath = outPath;
             video.setOutPath(outPath.resolve("hls"));
+            canModifyTheOutPath = false;
         }
     }
 

@@ -8,11 +8,11 @@ import java.nio.file.Path;
 public class Video {
     private Path currentPath;
     private  Path outPath;
-    private Status status;
+    private String fileName;
 
      public Video (Path path){
          this.currentPath = path;
-         this.status = Status.PROCESS;
+         this.fileName = path.getFileName().toString();
      }
 
     public Path getCurrentPath() {
@@ -24,20 +24,15 @@ public class Video {
     }
 
 
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
     public Path getOutPath() {
         return outPath;
     }
 
     public void setOutPath(Path outPath) {
         this.outPath = outPath;
+    }
+
+    public String getFileName() {
+        return fileName;
     }
 }

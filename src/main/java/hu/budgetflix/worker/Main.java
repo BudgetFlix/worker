@@ -19,12 +19,15 @@ public class Main {
                 new EncodeServiceFactory(dao, runner);
 
         EncodeController controller =
-                new EncodeController(factory,runner);
+                new EncodeController(factory);
 
         Observer observer = new Observer(controller);
 
-        observer.finished()
-                .thenRun(controller::shutdownGracefully)
-                .join();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down worker...");
+            observer.shutdown();
+            controller.shutdown();
+
+        }));
     }
 }

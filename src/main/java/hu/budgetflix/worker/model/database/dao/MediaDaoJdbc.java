@@ -1,7 +1,7 @@
 package hu.budgetflix.worker.model.database.dao;
 
+import hu.budgetflix.worker.model.Status;
 import hu.budgetflix.worker.model.media.Movie;
-
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,7 +31,7 @@ public class MediaDaoJdbc implements MediaDao {
 
             st.setString(1, movie.getName());
             st.setString(2, movie.getName());
-            st.setString(3, movie.getStatus().toString());
+            st.setString(3,Status.PROCESS.toString());
             st.setString(4, LocalDateTime.now().toString());
 
             try (ResultSet rs = st.executeQuery()) {
@@ -47,7 +47,7 @@ public class MediaDaoJdbc implements MediaDao {
         }
     }
     @Override
-    public void updatePatch(Movie movie) {
+    public void updateOutPatch(Movie movie) {
         String sql = "UPDATE movie SET hls_path = ? WHERE id = ? ";
         try (Connection con = dataSource.getConnection()) {
             PreparedStatement st =  con.prepareStatement(sql);
@@ -64,13 +64,13 @@ public class MediaDaoJdbc implements MediaDao {
     }
 
     @Override
-    public void updateStatus(Movie movie) {
+    public void updateStatus(Long id, Status status) {
         String sql = "UPDATE movie SET status = ? WHERE id = ? ";
         try (Connection con = dataSource.getConnection()) {
             PreparedStatement st =  con.prepareStatement(sql);
 
-            st.setString(1,movie.getStatus().toString());
-            st.setLong(2,movie.getId());
+            st.setString(1, status.name());
+            st.setLong(2,id);
 
             st.executeUpdate();
 

@@ -19,4 +19,9 @@ public class SeriesEncodeService implements EncodeService {
     public void startEncode() {
 
     }
+
+    @Override
+    public void shutDown() {
+
+    }
 }

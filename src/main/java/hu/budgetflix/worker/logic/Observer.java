@@ -4,8 +4,6 @@ import hu.budgetflix.worker.config.WorkerConfig;
 import hu.budgetflix.worker.controller.EncodeController;
 import hu.budgetflix.worker.model.DirectoryState;
 import hu.budgetflix.worker.view.Out;
-import hu.budgetflix.worker.view.StatusConsole;
-
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -17,10 +15,7 @@ public class Observer {
     Map<Path, DirectoryState> states = new ConcurrentHashMap<>();
     ScheduledExecutorService watchingDownloaderFile = Executors.newSingleThreadScheduledExecutor();
 
-    private final CompletableFuture<Void> finished =
-            new CompletableFuture<>();
     private final EncodeController encodeController;
-
 
     public Observer (EncodeController encodeController) {
         this.encodeController = encodeController;
@@ -32,10 +27,6 @@ public class Observer {
                 this::tick,0,5, TimeUnit.SECONDS);
     }
 
-    public CompletableFuture<Void> finished() {
-        return finished;
-    }
-
     void tick() {
 
         Out.log("observer is running");
@@ -45,7 +36,6 @@ public class Observer {
 
             for (Path file : stream) {
                 file = file.toAbsolutePath().normalize();
-
 
                 if (!Files.isDirectory(file)) continue;
 
@@ -69,25 +59,10 @@ public class Observer {
             }
             states.keySet().removeIf(p -> !Files.exists(p));
 
-            if (allstateIsSubmitted()
-                    && encodeController.isIdle()
-                    && !finished.isDone()) {
-
-                Out.log("All encodes finished. Shutting down observer.");
-                watchingDownloaderFile.shutdown();
-                finished.complete(null);
-            }
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-
-    private boolean allstateIsSubmitted() {
-        return states.values().stream()
-                .allMatch(DirectoryState::isSubmitted);
-    }
-
 
     private Path isReadyToEncode(Path file) {
         if(!Files.exists(file)) {
@@ -102,5 +77,9 @@ public class Observer {
             return null;
         }
         return file;
+    }
+
+    public void shutdown() {
+        watchingDownloaderFile.shutdown();
     }
 }

@@ -9,6 +9,7 @@ public class FfmpegConfig {
     public static List<String> buildFfmpegCmd(Video video) {
         return List.of(
                 "ffmpeg",
+                "-threads", "1",
                 "-y",
                 "-i", video.getCurrentPath().toString(),
 
