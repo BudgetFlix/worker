@@ -35,7 +35,6 @@ public class MovieEncodeService implements EncodeService {
     @Override
     public void buildUpStructure(Path directory) {
         try {
-            movie.setCurrentPath(FileMover.moveToProcessing(movie.getCurrentPath()));
 
             Stat stat = JsonReader.jsonToObject(directory);
 
@@ -45,6 +44,7 @@ public class MovieEncodeService implements EncodeService {
 
             movie = new Movie(directory, stat, video);
 
+            movie.setCurrentPath(FileMover.moveToProcessing(movie.getCurrentPath()));
             long id = dao.addNewMedia(movie);
             movie.setId(id);
 
