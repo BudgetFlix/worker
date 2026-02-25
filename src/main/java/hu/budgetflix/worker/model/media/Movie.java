@@ -30,6 +30,7 @@ public  class Movie {
 
     public void setCurrentPath(Path currentPath) {
         this.currentPath = currentPath;
+        video.setCurrentPath(currentPath.resolve(video.getCurrentPath().getFileName()));
     }
 
     public Path getOutPath() {
