@@ -23,7 +23,6 @@ public class MovieEncodeService implements EncodeService {
 
     private final MediaDao dao;
     private Movie movie;
-    private boolean isShutDown = false;
 
     private final FfmpegRunner runner;
 
@@ -97,14 +96,6 @@ public class MovieEncodeService implements EncodeService {
                 }
             }
         }
-        if (isShutDown) {
-            runner.shutdown();
-        }
-    }
-
-    @Override
-    public void shutDown() {
-        isShutDown = true;
     }
 
     private void success(Video currentVideo) throws IOException {

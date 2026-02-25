@@ -38,9 +38,7 @@ public class EncodeController {
 
             service.buildUpStructure(directory);
             service.startEncode();
-            if(shuttingDown){
-                service.shutDown();
-            }
+
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -15,6 +15,7 @@ import java.util.concurrent.*;
 
 public class FfmpegRunner {
 
+    private Process currentFfmpeg;
     private final ExecutorService ioPool = Executors.newCachedThreadPool();
 
     public JobResult start(List<String> cmd,String filename) throws IOException {
@@ -22,13 +23,13 @@ public class FfmpegRunner {
         Out.log("ffmpeg started " + filename);
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
-        Process p = pb.start();
+        currentFfmpeg = pb.start();
 
         Deque<String> tail = new ArrayDeque<>(60);
 
         Future<?> stderrReader = ioPool.submit(() -> {
             try (BufferedReader br = new BufferedReader(
-                    new InputStreamReader(p.getErrorStream(), StandardCharsets.UTF_8))) {
+                    new InputStreamReader(currentFfmpeg.getErrorStream(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = br.readLine()) != null) {
                     if (tail.size() == 60) tail.removeFirst();
@@ -38,7 +39,7 @@ public class FfmpegRunner {
         });
 
         Future<?> stdoutReader = ioPool.submit(() -> {
-            try (InputStream in = p.getInputStream()) {
+            try (InputStream in = currentFfmpeg.getInputStream()) {
                 byte[] buf = new byte[8192];
                 while (in.read(buf) != -1) {}
             } catch (IOException ignored) {}
@@ -46,7 +47,7 @@ public class FfmpegRunner {
 
         int exit;
         try {
-            exit = p.waitFor();
+            exit = currentFfmpeg.waitFor();
             stderrReader.get(2, TimeUnit.SECONDS);
             stdoutReader.get(2, TimeUnit.SECONDS);
 
@@ -62,8 +63,9 @@ public class FfmpegRunner {
         return new JobResult(exit,"Is OK");
     }
 
-    public void shutdown() {
-        ioPool.shutdown();
+    public void shutdown() throws InterruptedException {
+       ioPool.shutdown();
+       ioPool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
     }
 
 }

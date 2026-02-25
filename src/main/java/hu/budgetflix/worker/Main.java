@@ -27,6 +27,11 @@ public class Main {
             System.out.println("Shutting down worker...");
             observer.shutdown();
             controller.shutdown();
+            try {
+                runner.shutdown();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
 
         }));
     }
