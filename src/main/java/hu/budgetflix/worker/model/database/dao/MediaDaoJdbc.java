@@ -21,8 +21,8 @@ public class MediaDaoJdbc implements MediaDao {
     public Long addNewMedia(Movie movie) {
 
         String sql = """
-        INSERT INTO movie (title, original_filename, status, created_at)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO movie (title, status, created_at)
+        VALUES (?, ?, ?)
         RETURNING id
         """;
 
@@ -30,9 +30,8 @@ public class MediaDaoJdbc implements MediaDao {
              PreparedStatement st = connection.prepareStatement(sql)) {
 
             st.setString(1, movie.getName());
-            st.setString(2, movie.getName());
-            st.setString(3,Status.PROCESS.toString());
-            st.setString(4, LocalDateTime.now().toString());
+            st.setString(2,Status.PROCESS.toString());
+            st.setString(3, LocalDateTime.now().toString());
 
             try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {

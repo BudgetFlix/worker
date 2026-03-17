@@ -5,26 +5,26 @@ import java.nio.file.Path;
 public class WorkerConfig {
 
     public final static Path NEW_DIR =
-            Path.of(System.getenv().getOrDefault("NEW_DIR", "/srv/media/inbox/new"));
+            Path.of(System.getenv().getOrDefault("NEW_DIR", "/srv/budgetflix/media/inbox/new"));
 
     public final static Path PROCESS_DIR =
-            Path.of(System.getenv().getOrDefault("PROCESS_DIR", "/srv/media/inbox/process"));
+            Path.of(System.getenv().getOrDefault("PROCESS_DIR", "/srv/budgetflix/media/inbox/process"));
 
     public final static Path DONE_DIR =
-            Path.of(System.getenv().getOrDefault("DONE_DIR", "/srv/media/inbox/done"));
+            Path.of(System.getenv().getOrDefault("DONE_DIR", "/srv/budgetflix/media/inbox/done"));
 
     public final static Path ERROR_DIR =
-            Path.of(System.getenv().getOrDefault("ERROR_DIR", "/srv/media/inbox/error"));
+            Path.of(System.getenv().getOrDefault("ERROR_DIR", "/srv/budgetflix/media/inbox/error"));
 
     public final static Path ERROR_LOG =
-            Path.of(System.getenv().getOrDefault("ERROR_LOG", "/srv/media/inbox/error/errorLog.txt"));
+            Path.of(System.getenv().getOrDefault("ERROR_LOG", "/srv/budgetflix/media/inbox/error/errorLog.txt"));
 
     public final static Path DATA_BASE =
-            Path.of(System.getenv().getOrDefault("DATA_BASE", "/srv/backend/app.db"));
+            Path.of(System.getenv().getOrDefault("DATA_BASE", "/srv/budgetflix/database/budgetflix.db"));
 
     public final static Path MOVIE_SOURCE =
-            Path.of(System.getenv().getOrDefault("DATA_BASE", "/srv/media/library/movies"));
+            Path.of(System.getenv().getOrDefault("DATA_BASE", "/srv/budgetflix/media/library/movies"));
 
     public final static Path SERIES_SOURCE =
-            Path.of(System.getenv().getOrDefault("DATA_BASE", "/srv/media/library/series"));
+            Path.of(System.getenv().getOrDefault("DATA_BASE", "/srv/budgetflix/media/library/series"));
 }

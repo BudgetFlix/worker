@@ -1,5 +1,6 @@
 package hu.budgetflix.worker.config;
 
+import hu.budgetflix.worker.model.Stat;
 import hu.budgetflix.worker.model.media.Video;
 
 import java.util.List;
