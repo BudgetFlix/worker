@@ -31,7 +31,7 @@ jobs:
           ls -la target
 
       - name: Rename JAR
-        run: mv target/*.jar worker.jar
+        run: mv target/worker.jar worker.jar
 
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
