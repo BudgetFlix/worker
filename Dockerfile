@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 ffmpeg \
-openjdk-21-jre-headless && apt-get clean && rm -rf /var/lib/apt/lists/*
+openjdk-17-jre-headless && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
