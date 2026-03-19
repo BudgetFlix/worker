@@ -22,11 +22,8 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Make mvnw executable
-        run: chmod +x mvnw
-
       - name: Build JAR
-        run: ./mvnw clean package -DskipTests
+        run: mvn clean package -DskipTests
 
       - name: Rename JAR
         run: mv target/*.jar app.jar
