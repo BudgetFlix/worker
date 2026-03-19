@@ -26,7 +26,7 @@ jobs:
         run: mvn clean package -DskipTests
 
       - name: Rename JAR
-        run: mv target/*.jar app.jar
+        run: mv target/*.jar worker.jar
 
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
