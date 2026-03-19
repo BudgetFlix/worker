@@ -25,6 +25,11 @@ jobs:
       - name: Build JAR
         run: mvn clean package -DskipTests
 
+      - name: Verify build
+        run: |
+          echo "Checking target folder"
+          ls -la target
+
       - name: Rename JAR
         run: mv target/*.jar worker.jar
 
