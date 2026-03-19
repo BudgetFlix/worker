@@ -8,6 +8,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 public class MediaDaoJdbc implements MediaDao {
     private DataSource dataSource;
@@ -31,7 +33,11 @@ public class MediaDaoJdbc implements MediaDao {
 
             st.setString(1, movie.getName());
             st.setString(2,Status.PROCESS.toString());
-            st.setString(3, LocalDateTime.now().toString());
+            st.setString(3,
+                    LocalDateTime.now()
+                            .truncatedTo(ChronoUnit.SECONDS)
+                            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+            );
 
             try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {
