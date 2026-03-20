@@ -10,13 +10,13 @@ WORKDIR /app
 
 COPY worker.jar worker.jar
 
-ENV NEW_DIR=/media/inbox/new
-ENV PROCESS_DIR=/media/inbox/process
-ENV DONE_DIR=/media/inbox/done
-ENV ERROR_DIR=/media/inbox/error
-ENV ERROR_LOG=/media/inbox/error/errorLog.txt
-ENV DATA_BASE=/media/database/budgetflix.db
-ENV MOVIE_SOURCE=/media/library/movies
-ENV SERIES_SOURCE=/media/library/series
+ENV NEW_DIR=/budgetflix/media/inbox/new
+ENV PROCESS_DIR=/budgetflix/media/inbox/process
+ENV DONE_DIR=/budgetflix/media/inbox/done
+ENV ERROR_DIR=/budgetflix/media/inbox/error
+ENV ERROR_LOG=/budgetflix/media/inbox/error/errorLog.txt
+ENV DATA_BASE=/budgetflix/database/budgetflix.db
+ENV MOVIE_SOURCE=/budgetflix/media/library/movies
+ENV SERIES_SOURCE=/budgetflix/media/library/series
 
 ENTRYPOINT ["java", "-jar", "worker.jar"]
