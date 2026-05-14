@@ -61,6 +61,7 @@ func getEnv(key string, fallback string) string {
 	value := os.Getenv(key)
 
 	if value == "" {
+		fmt.Printf("%s env is missing", key)
 		return fallback
 	}
 
