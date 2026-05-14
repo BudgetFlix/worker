@@ -25,7 +25,7 @@ func main() {
 
 	defer consumer.Close()
 
-	msgs, err := consumer.Consume("video.upload")
+	msgs, err := consumer.Consume("video.upload.queue")
 	if err != nil {
 		log.Fatal(err)
 	}
