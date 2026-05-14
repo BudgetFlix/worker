@@ -1,8 +1,9 @@
-name: Build and Push API
+name: Build and Push Worker
 
 on:
   push:
     branches: [ "main" ]
+
 
 jobs:
   build:
@@ -16,29 +17,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
-
-      - name: Build JAR
-        run: mvn clean package -DskipTests
-
-      - name: Verify build
-        run: |
-          echo "Checking target folder"
-          ls -la target
-
-      - name: Rename JAR
-        run: mv target/worker.jar worker.jar
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Build Docker image
-        run: docker build -t ghcr.io/budgetflix/budgetflix-worker:dev .
+        run: |
+          docker build \
+            -t ghcr.io/budgetflix/budgetflix-worker:dev \
+            .
 
       - name: Push Docker image
-        run: docker push ghcr.io/budgetflix/budgetflix-worker:dev
-
+        run: |
+          docker push ghcr.io/budgetflix/budgetflix-worker:dev
