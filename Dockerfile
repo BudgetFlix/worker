@@ -1,22 +1,35 @@
+# ===== Build stage =====
+FROM golang:1.24-bookworm AS builder
+
+WORKDIR /app
+
+# Go modulok
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Source
+COPY . .
+
+# Binary build
+RUN CGO_ENABLED=0 GOOS=linux go build -o worker .
+
+# ===== Runtime stage =====
 FROM debian:bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-ffmpeg \
-openjdk-17-jre-headless && apt-get clean && rm -rf /var/lib/apt/lists/*
+    ffmpeg \
+    ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY worker.jar worker.jar
+# Binary copy
+COPY --from=builder /app/worker worker
 
-ENV NEW_DIR=/budgetflix/media/inbox/new
-ENV PROCESS_DIR=/budgetflix/media/inbox/process
-ENV DONE_DIR=/budgetflix/media/inbox/done
-ENV ERROR_DIR=/budgetflix/media/inbox/error
-ENV ERROR_LOG=/budgetflix/media/inbox/error/errorLog.txt
-ENV DATA_BASE=/budgetflix/database/budgetflix.db
-ENV MOVIE_SOURCE=/budgetflix/media/library/movies
-ENV SERIES_SOURCE=/budgetflix/media/library/series
 
-ENTRYPOINT ["java", "-jar", "worker.jar"]
+# Execute
+ENTRYPOINT ["./worker"]
