@@ -5,41 +5,17 @@ import (
 )
 
 type Consumer struct {
-	conn    *amqp.Connection
-	channel *amqp.Channel
+	connection *Connection
 }
 
-func NewConsumer(url string) (*Consumer, error) {
-	conn, err := amqp.Dial(url)
-	if err != nil {
-		return nil, err
-	}
-
-	ch, err := conn.Channel()
-	if err != nil {
-		conn.Close()
-		return nil, err
-	}
+func NewConsumer (connection *Connection) *Consumer{
 
 	return &Consumer{
-		conn:    conn,
-		channel: ch,
-	}, nil
+		connection: connection,
+	}
 }
 
-func (c *Consumer) Consume(queue string) (<-chan amqp.Delivery, error) {
-	return c.channel.Consume(
-		queue,
-		"",
-		false,
-		false,
-		false,
-		false,
-		nil,
-	)
+func (c *Consumer) Consume( queue string) (<- chan amqp.Delivery,error){
+	return c.connection.channel.Consume(queue,"",false,false,false,false,nil)
 }
 
-func (c *Consumer) Close() {
-	c.channel.Close()
-	c.conn.Close()
-}

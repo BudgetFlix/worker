@@ -5,17 +5,15 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
-	"worker/internal/rabbitmq"
-
 	"worker/internal/config"
-
+	"worker/internal/rabbitmq"
 )
 
 func main() {
+
 	cfg := config.Load()
 
-
-	consumer, err := rabbitmq.NewConsumer(
+	connection, err := rabbitmq.NewConnection(
 		cfg.RabbitMQURL(),
 	)
 
@@ -23,31 +21,34 @@ func main() {
 		log.Fatal(err)
 	}
 
-	defer consumer.Close()
+	defer connection.Close()
 
-	msgs, err := consumer.Consume("video.upload.queue")
+	consumer := rabbitmq.NewConsumer(
+		connection,
+	)
+
+	msgs, err := consumer.Consume(
+		"video.upload.queue",
+	)
+
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println("worker started")
-
-	for msg := range msgs {
-		err := handleMessage(msg)
-
-		if err != nil {
-			log.Println(err)
-
-			msg.Nack(false, true)
-			continue
-		}
-
-		msg.Ack(false)
-	}
+	rabbitmq.Loop(
+		msgs,
+		handleMessage,
+	)
 }
 
-func handleMessage(msg amqp.Delivery) error {
-	log.Printf("processing: %s", string(msg.Body))
+func handleMessage(
+	msg amqp.Delivery,
+) error {
+
+	log.Printf(
+		"processing message: %s",
+		string(msg.Body),
+	)
 
 	return nil
 }
