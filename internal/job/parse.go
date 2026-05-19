@@ -3,6 +3,8 @@ package job
 import (
 	"encoding/json"
 	"path/filepath"
+
+	"worker/internal/config"
 )
 
 type MediaType string
@@ -17,6 +19,7 @@ type Message struct {
 	MediaID int64          `json:"mediaID"`
 	Videos  map[int]string `json:"videos"`
 	Type    MediaType      `json:"type"`
+	Path    string         `json:"path"`
 }
 
 func FromJSON(data []byte) (*MediaJob, error) {
@@ -39,13 +42,20 @@ func FromJSON(data []byte) (*MediaJob, error) {
 	}
 
 	job := &MediaJob{
-		ID:       msg.JobID,
-		MediaID:  msg.MediaID,
-		Type:     msg.Type,
-		Items:    items,
-		State:    StateReceived,
+		ID:      msg.JobID,
+		MediaID: msg.MediaID,
+		Type:    msg.Type,
+		Items:   items,
+		Path:    jobPath(msg),
+		State:   StateReceived,
 	}
 
 	return job, nil
 }
 
+func jobPath(msg Message) string {
+	return filepath.Join(
+		config.Load().NewDir,
+		"job_"+msg.JobID,
+	)
+}
