@@ -3,10 +3,9 @@ package main
 import (
 	"log"
 
-	amqp "github.com/rabbitmq/amqp091-go"
-
 	"worker/internal/config"
 	"worker/internal/rabbitmq"
+	"worker/internal/handler"
 )
 
 func main() {
@@ -37,18 +36,6 @@ func main() {
 
 	rabbitmq.Loop(
 		msgs,
-		handleMessage,
+		handler.Media,
 	)
-}
-
-func handleMessage(
-	msg amqp.Delivery,
-) error {
-
-	log.Printf(
-		"processing message: %s",
-		string(msg.Body),
-	)
-
-	return nil
 }
