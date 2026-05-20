@@ -91,4 +91,5 @@ func Loging(msg string) {
 	for range len(msg) {
 		fmt.Print(symbol)
 	}
+	fmt.Println()
 }

@@ -37,7 +37,6 @@ func FromJSON(data []byte) (*MediaJob, error) {
 
 			FileName: filepath.Base(path),
 
-			State: StateReceived,
 		})
 	}
 

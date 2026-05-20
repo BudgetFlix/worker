@@ -13,6 +13,7 @@ type MediaJob struct {
 	Items []VideoItem
 
 	Path string
+	Outdir string
 
 	State State
 
@@ -23,11 +24,8 @@ type MediaJob struct {
 
 type VideoItem struct {
 	Index int
-
 	FileName string
-
-	State State
-
+	Path string
 	Error string
 }
 

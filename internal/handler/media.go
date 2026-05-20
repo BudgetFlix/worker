@@ -1,48 +1,57 @@
 package handler
 
-import(
+import (
 	"context"
 	"fmt"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
 	"worker/internal/job"
-	"worker/internal/pipeline"
 	"worker/internal/logger"
+	"worker/internal/pipeline"
+	"worker/internal/storage"
 )
 
-func Media (msg amqp.Delivery) error {
+func Media(msg amqp.Delivery) error {
 
 	logger.Loging("✅ Get message in handler")
-	
-	mediajob, err := job.FromJSON(msg.Body,) 
-	if err != nil {return err}
-	
-	logger.Loging("✅ Sucsess formating in handler")
+
+	mediajob, err := job.FromJSON(msg.Body)
+	if err != nil {
+		return err
+	}
+
+	logger.Loging("✅ Success formating in handler")
 	logger.Job(mediajob)
-	
+
 	err = job.Validate(mediajob)
 	if err != nil {
 		return err
-	} 
-	
-	logger.Loging("✅ Sucsess validation in handler")
-		
-	//todo: set extension to .ready
+	}
+
+	logger.Loging("✅ Success validation in handler")
+
+	for i := range mediajob.Items {
+		err = storage.ChangeState(&mediajob.Items[i], storage.StateNew, storage.StateReady)
+		if err != nil {
+			return err
+		}
+	}
+
+	logger.Loging("✅ Success add .ready")
 
 	switch mediajob.Type {
 
-		case job.MediaTypeMovie:
-			pipe := pipeline.NewMovie()
+	case job.MediaTypeMovie:
+		pipe := pipeline.NewMovie()
 
-			return pipe.Execute(
-				context.Background(),
-				mediajob,
-			)
-		
-		default:
-			return fmt.Errorf("unsuported media type %s",mediajob.Type)
+		return pipe.Execute(
+			context.Background(),
+			mediajob,
+		)
+
+	default:
+		return fmt.Errorf("unsuported media type %s", mediajob.Type)
 	}
 
 }
-
