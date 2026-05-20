@@ -1,32 +1,49 @@
 package rabbitmq
 
 import (
+	"context"
 	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-
-func Loop (
+func Loop(
+	ctx context.Context,
 	msgs <-chan amqp.Delivery,
 	handler func(amqp.Delivery) error,
-){
+) {
+
 	log.Println("consumer loop started")
-	
-	for msg := range msgs{
 
-		err := handler(msg)
+	for {
+		select {
 
-		if err != nil {
-			log.Printf("message handle faild: %v", err)
-			
-			Nack(msg)
+		case <-ctx.Done():
+			log.Println("consumer loop stopped")
+			return
 
-			continue
+		case msg, ok := <-msgs:
+
+			if !ok {
+				log.Println("consumer channel closed")
+				return
+			}
+
+			err := handler(msg)
+
+			if err != nil {
+
+				log.Printf(
+					"message handle failed: %v",
+					err,
+				)
+
+				Nack(msg)
+
+				continue
+			}
+
+			Ack(msg)
 		}
-
-		Ack(msg)
-
 	}
-	log.Println("consumer loop stopped")
 }

@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
@@ -11,6 +12,8 @@ import (
 	"worker/internal/pipeline"
 	"worker/internal/storage"
 )
+
+var PipelineWG sync.WaitGroup
 
 func Media(msg amqp.Delivery) error {
 
@@ -43,7 +46,7 @@ func Media(msg amqp.Delivery) error {
 	switch mediajob.Type {
 
 	case job.MediaTypeMovie:
-		pipe := pipeline.NewMovie()
+		pipe := pipeline.NewMovie(&PipelineWG)
 
 		return pipe.Execute(
 			context.Background(),
