@@ -44,7 +44,7 @@ func (p *Movie) Execute(
 
 	processingPath, err := storage.ChangeState(
 		input,
-		storage.StateReady,
+		storage.StateNew,
 		storage.StateProcessing,
 	)
 

@@ -9,7 +9,7 @@ import (
 type FileState string
 
 const (
-	StateNew        FileState = ".new"
+	StateNew        FileState = ""
 	StateReady      FileState = ".ready"
 	StateProcessing FileState = ".processing"
 	StateDone       FileState = ".done"
