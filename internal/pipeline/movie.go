@@ -9,6 +9,7 @@ import (
 	"worker/internal/ffmpeg"
 	"worker/internal/job"
 	"worker/internal/storage"
+	"worker/internal/logger"
 )
 
 type Movie struct{}
@@ -30,65 +31,75 @@ func (p *Movie) Execute(
 
 	cfg := config.Load()
 
+	logger.Job(job)
+	
 	err := storage.MoveJob(
 		job,
 		cfg.ProcessDir,
 	)
-
+	
 	if err != nil {
 		return err
 	}
-
+	logger.Job(job)
+	
 	item := &job.Items[0]
 	input := job.ItemPath(item)
 
+	logger.Job(job)
+	
 	processingPath, err := storage.ChangeState(
 		input,
 		storage.StateNew,
 		storage.StateProcessing,
 	)
-
+	
 	if err != nil {
 		return moveFailedJob(cfg, job, "", err)
 	}
-
+	
 	outputDir, err := storage.CreateMovieLibraryDir(
 		cfg,
 		job,
 	)
-
+	
 	if err != nil {
 		return moveFailedJob(cfg, job, processingPath, err)
 	}
-
+	logger.Job(job)
+	
+	
 	err = ffmpeg.HLS(
 		ctx,
 		processingPath,
 		outputDir,
 	)
-
+	
 	if err != nil {
 		return moveFailedJob(cfg, job, processingPath, err)
 	}
-
+	
+	logger.Job(job)
 	_, err = storage.ChangeState(
 		processingPath,
 		storage.StateProcessing,
 		storage.StateDone,
 	)
-
+	
 	if err != nil {
 		return moveFailedJob(cfg, job, processingPath, err)
 	}
-
+	logger.Job(job)
+	
 	err = storage.MoveJobToAvailableDir(
 		job,
 		cfg.DoneDir,
 	)
-
+	
 	if err != nil {
 		return err
 	}
+	logger.Job(job)
 
 	return nil
 }
