@@ -1,9 +1,11 @@
 # =========================================================
-# BUILD CUSTOM X264 + MINIMAL FFMPEG
+# FFMPEG + X264 BUILD
 # =========================================================
 FROM alpine:3.22 AS ffmpeg-builder
 
 RUN apk add --no-cache \
+    bash \
+    git \
     build-base \
     yasm \
     nasm \
@@ -12,33 +14,31 @@ RUN apk add --no-cache \
     tar \
     xz
 
-WORKDIR /tmp
+WORKDIR /build
 
 # =========================================================
-# x264
+# BUILD X264
 # =========================================================
-RUN wget https://code.videolan.org/videolan/x264/-/archive/stable/x264-stable.tar.gz && \
-    tar -xzf x264-stable.tar.gz
+RUN git clone --depth 1 https://code.videolan.org/videolan/x264.git
 
-WORKDIR /tmp/x264-stable
+WORKDIR /build/x264
 
 RUN ./configure \
     --prefix="/opt/ffmpeg" \
     --enable-static \
-    --disable-cli \
     --disable-opencl && \
     make -j$(nproc) && \
     make install
 
 # =========================================================
-# ffmpeg
+# BUILD FFMPEG
 # =========================================================
-WORKDIR /tmp
+WORKDIR /build
 
 RUN wget https://ffmpeg.org/releases/ffmpeg-7.1.tar.xz && \
     tar -xJf ffmpeg-7.1.tar.xz
 
-WORKDIR /tmp/ffmpeg-7.1
+WORKDIR /build/ffmpeg-7.1
 
 RUN PKG_CONFIG_PATH="/opt/ffmpeg/lib/pkgconfig" \
     ./configure \
@@ -78,6 +78,7 @@ RUN PKG_CONFIG_PATH="/opt/ffmpeg/lib/pkgconfig" \
     --enable-libx264 \
     --enable-encoder=libx264 \
     \
+    --enable-filter=scale \
     --enable-swscale \
     \
     --enable-small \
@@ -86,10 +87,7 @@ RUN PKG_CONFIG_PATH="/opt/ffmpeg/lib/pkgconfig" \
     --disable-debug \
     --disable-network \
     --disable-avdevice \
-    --disable-postproc \
-    \
-    --disable-programs \
-    --enable-ffmpeg && \
+    --disable-postproc && \
     make -j$(nproc) && \
     make install
 
