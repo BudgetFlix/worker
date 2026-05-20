@@ -31,11 +31,14 @@ func FromJSON(data []byte) (*MediaJob, error) {
 
 	items := make([]VideoItem, 0, len(msg.Videos))
 
+	jobPath := jobPathMaker(msg)
+
 	for index, path := range msg.Videos {
+		filename := filepath.Base(path)
 		items = append(items, VideoItem{
 			Index: index,
-
-			FileName: filepath.Base(path),
+			FileName: filename,
+			Path: filepath.Join(jobPath, filename),
 
 		})
 	}
@@ -45,14 +48,14 @@ func FromJSON(data []byte) (*MediaJob, error) {
 		MediaID: msg.MediaID,
 		Type:    msg.Type,
 		Items:   items,
-		Path:    jobPath(msg),
+		Path:    jobPath,
 		State:   StateReceived,
 	}
 
 	return job, nil
 }
 
-func jobPath(msg Message) string {
+func jobPathMaker(msg Message) string {
 	return filepath.Join(
 		config.Load().NewDir,
 		"job_"+msg.JobID,
