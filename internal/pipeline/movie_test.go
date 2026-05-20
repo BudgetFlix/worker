@@ -26,7 +26,7 @@ func TestMovieExecuteMovesJobToErrorWhenReadyStateIsMissing(t *testing.T) {
 		Type:    job.MediaTypeMovie,
 		Path:    jobDir,
 		Items: []job.VideoItem{
-			{Index: 0, FileName: "movie.mp4", State: job.StateReceived},
+			{Index: 0, FileName: "movie.mp4",},
 		},
 		State: job.StateReceived,
 	}
@@ -69,7 +69,7 @@ func TestMovieExecuteMovesProcessingJobToError(t *testing.T) {
 		Type:    job.MediaTypeMovie,
 		Path:    jobDir,
 		Items: []job.VideoItem{
-			{Index: 0, FileName: "movie.mp4.ready", State: job.StateReceived},
+			{Index: 0, FileName: "movie.mp4.ready", },
 		},
 		State: job.StateReceived,
 	}

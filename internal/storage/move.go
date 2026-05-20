@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"worker/internal/job"
 )
@@ -15,6 +16,8 @@ func MoveJob(
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return err
 	}
+
+	oldPath := job.Path
 
 	targetPath := filepath.Join(
 		targetDir,
@@ -28,46 +31,22 @@ func MoveJob(
 		)
 	}
 
-	err := os.Rename(job.Path, targetPath)
-	if err != nil {
+	if err := os.Rename(job.Path, targetPath); err != nil {
 		return err
 	}
 
 	job.Path = targetPath
 
-	return nil
-}
+	for i := range job.Items {
+		item := &job.Items[i]
 
-func MoveJobToAvailableDir(
-	job *job.MediaJob,
-	targetDir string,
-) error {
-	if err := os.MkdirAll(targetDir, 0755); err != nil {
-		return err
-	}
-
-	baseName := filepath.Base(job.Path)
-	targetPath := filepath.Join(targetDir, baseName)
-
-	for index := 1; ; index++ {
-		if _, err := os.Stat(targetPath); os.IsNotExist(err) {
-			break
-		} else if err != nil {
-			return err
-		}
-
-		targetPath = filepath.Join(
-			targetDir,
-			fmt.Sprintf("%s_%d", baseName, index),
+		item.Path = strings.Replace(
+			item.Path,
+			oldPath,
+			job.Path,
+			1,
 		)
 	}
-
-	err := os.Rename(job.Path, targetPath)
-	if err != nil {
-		return err
-	}
-
-	job.Path = targetPath
 
 	return nil
 }

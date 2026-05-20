@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"worker/internal/job"
 )
 
 type FileState string
@@ -17,25 +18,35 @@ const (
 )
 
 func ChangeState(
-	path string,
+	item *job.VideoItem,
 	from FileState,
 	to FileState,
-) (string, error) {
+) error {
 
-	if !strings.HasSuffix(path, string(from)) {
-		return "", fmt.Errorf(
+	if from != StateNew &&
+	!strings.HasSuffix(item.Path, string(from)) {
+		return fmt.Errorf(
 			"file does not have expected state suffix %s: %s",
 			from,
-			path,
+			item.Path,
 		)
 	}
 
-	newPath := strings.TrimSuffix(path, string(from)) + string(to)
+	newPath := strings.TrimSuffix(
+		item.Path,
+		string(from),
+	) + string(to)
 
-	err := os.Rename(path, newPath)
-	if err != nil {
-		return "", err
+	if err := os.Rename(item.Path, newPath); err != nil {
+		return err
 	}
 
-	return newPath, nil
+	item.Path = newPath
+
+	item.FileName = strings.TrimSuffix(
+		item.FileName,
+		string(from),
+	) + string(to)
+
+	return nil
 }
