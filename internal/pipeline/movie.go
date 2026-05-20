@@ -31,6 +31,7 @@ func (p *Movie) Execute(
 
 	cfg := config.Load()
 
+	logger.Loging("The basic: ")
 	logger.Job(job)
 	
 	err := storage.MoveJob(
@@ -41,12 +42,12 @@ func (p *Movie) Execute(
 	if err != nil {
 		return err
 	}
+	logger.Loging("✅ Succses moving to process dir ")
 	logger.Job(job)
 	
 	item := &job.Items[0]
 	input := job.ItemPath(item)
 
-	logger.Job(job)
 	
 	processingPath, err := storage.ChangeState(
 		input,
@@ -57,6 +58,8 @@ func (p *Movie) Execute(
 	if err != nil {
 		return moveFailedJob(cfg, job, "", err)
 	}
+	logger.Loging("✅ succses set state to .process")
+	logger.Job(job)
 	
 	outputDir, err := storage.CreateMovieLibraryDir(
 		cfg,
@@ -66,29 +69,35 @@ func (p *Movie) Execute(
 	if err != nil {
 		return moveFailedJob(cfg, job, processingPath, err)
 	}
+	logger.Loging("✅ create the outdir")
 	logger.Job(job)
 	
 	
+	logger.Loging("Start the encode")
 	err = ffmpeg.HLS(
 		ctx,
 		processingPath,
 		outputDir,
 	)
 	
+	
 	if err != nil {
 		return moveFailedJob(cfg, job, processingPath, err)
 	}
-	
+	logger.Loging("✅ succses encode")
 	logger.Job(job)
+	
 	_, err = storage.ChangeState(
 		processingPath,
 		storage.StateProcessing,
 		storage.StateDone,
 	)
 	
+	
 	if err != nil {
 		return moveFailedJob(cfg, job, processingPath, err)
 	}
+	logger.Loging("✅ succses .done extension")
 	logger.Job(job)
 	
 	err = storage.MoveJobToAvailableDir(
@@ -99,6 +108,7 @@ func (p *Movie) Execute(
 	if err != nil {
 		return err
 	}
+	logger.Loging("✅ succses moveing to done dir")
 	logger.Job(job)
 
 	return nil

@@ -3,8 +3,8 @@ package logger
 import (
 	"fmt"
 	"log"
-	"path/filepath"
 	"os"
+	"path/filepath"
 
 	"worker/internal/job"
 )
@@ -21,13 +21,13 @@ func Job(job *job.MediaJob) {
 
 	log.Println("----------------------------------------")
 
-	LogRealPaths(job)
+	logRealPaths(job)
 
 	log.Println("========================================")
 	fmt.Println()
 }
 
-func LogRealPaths(job *job.MediaJob) {
+func logRealPaths(job *job.MediaJob) {
 	log.Println("========================================")
 	log.Println("REAL FILE PATHS")
 	log.Println("========================================")
@@ -76,4 +76,19 @@ func LogRealPaths(job *job.MediaJob) {
 	}
 
 	log.Println("========================================")
+}
+
+func Loging(msg string) {
+
+	symbol := "="
+	for range len(msg) {
+		fmt.Print(symbol)
+	}
+
+	fmt.Println()
+	fmt.Println(msg)
+
+	for range len(msg) {
+		fmt.Print(symbol)
+	}
 }
