@@ -21,6 +21,8 @@ func Media (msg amqp.Delivery) error {
 		return err
 	} 
 
+	//todo: set extension to .ready
+
 	switch mediajob.Type {
 
 		case job.MediaTypeMovie:
