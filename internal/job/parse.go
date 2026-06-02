@@ -2,6 +2,7 @@ package job
 
 import (
 	"encoding/json"
+	"os"
 	"path/filepath"
 
 	"worker/internal/config"
@@ -36,10 +37,9 @@ func FromJSON(data []byte) (*MediaJob, error) {
 	for index, path := range msg.Videos {
 		filename := filepath.Base(path)
 		items = append(items, VideoItem{
-			Index: index,
+			Index:    index,
 			FileName: filename,
-			Path: filepath.Join(jobPath, filename),
-
+			Path:     filepath.Join(jobPath, filename),
 		})
 	}
 
@@ -56,8 +56,30 @@ func FromJSON(data []byte) (*MediaJob, error) {
 }
 
 func jobPathMaker(msg Message) string {
-	return filepath.Join(
-		config.Load().NewDir,
+	cfg := config.Load()
+	newJobPath := filepath.Join(
+		cfg.NewDir,
 		"job_"+msg.JobID,
 	)
+
+	if pathExists(newJobPath) {
+		return newJobPath
+	}
+
+	errorJobPath := filepath.Join(
+		cfg.ErrorDir,
+		"job_"+msg.JobID,
+	)
+
+	// TODO: Resolve the job folder from the incoming message once the API sends it.
+	if pathExists(errorJobPath) {
+		return errorJobPath
+	}
+
+	return newJobPath
+}
+
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }

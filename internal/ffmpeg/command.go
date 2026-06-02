@@ -22,8 +22,6 @@ func BuildHLSCommand(
 	return []string{
 		"ffmpeg",
 
-		"-threads", "1",
-
 		"-y",
 
 		"-i", input,

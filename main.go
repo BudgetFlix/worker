@@ -11,6 +11,7 @@ import (
 	"worker/internal/config"
 	"worker/internal/handler"
 	"worker/internal/rabbitmq"
+	"worker/internal/storage"
 )
 
 func main() {
@@ -24,6 +25,8 @@ func main() {
 
 	cfg := config.Load()
 
+	recoverProcessingJobs(cfg)
+
 	connection := mustRabbitConnection(cfg)
 	defer connection.Close()
 
@@ -32,20 +35,34 @@ func main() {
 	)
 
 	msgs, err := consumer.Consume(
-		"video.upload.queue",
+		cfg.UploadQueue,
 	)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	producer := rabbitmq.NewProducer(
+		connection,
+	)
+
 	go rabbitmq.Loop(
 		ctx,
 		msgs,
 		handler.Media,
+		producer,
+		&cfg,
 	)
 
 	waitShutdown(ctx)
+}
+
+func recoverProcessingJobs(
+	cfg config.Config,
+) {
+	if err := storage.RecoverProcessingJobs(cfg); err != nil {
+		log.Printf("failed to recover processing jobs: %v", err)
+	}
 }
 
 func mustRabbitConnection(

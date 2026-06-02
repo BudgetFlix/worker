@@ -50,7 +50,7 @@ func (p *Movie) Execute(
 		)
 
 		if err != nil {
-			return err
+			return moveFailedJob(cfg, job, &job.Items[0], err)
 		}
 
 		logger.Loging("✅ Success moving to process dir")
@@ -117,7 +117,7 @@ func (p *Movie) Execute(
 		)
 
 		if err != nil {
-			return err
+			return moveFailedJob(cfg, job, item, err)
 		}
 
 		logger.Loging("✅ Success moving to done dir")
@@ -147,11 +147,7 @@ func moveFailedJob(
 	var stateErr error
 
 	if item != nil {
-		stateErr = storage.ChangeState(
-			item,
-			storage.StateProcessing,
-			storage.StateError,
-		)
+		stateErr = storage.ChangeToError(item)
 	}
 
 	moveErr := storage.MoveJob(
