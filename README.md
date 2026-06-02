@@ -53,32 +53,47 @@
 
 ## Worker Flow
 
-```mermaid
-flowchart LR
+``` mermaid
+flowchart TD
     RabbitMQ["RabbitMQ: video.upload"]
+    Handler["Media handler"]
+    Validate["Parse & validate"]
+    Ready["Mark .ready"]
+    ProcessDir["Move to PROCESS_DIR"]
+    Processing["Mark .processing"]
+    HLS["FFmpeg HLS encoding"]
+    Done["Mark .done"]
+    DoneDir["Move to DONE_DIR"]
+    StatusDone["Publish DONE"]
+    Ack["Ack"]
+
+    Error["Mark .error"]
+    StatusError["Publish ERROR"]
+    Nack["Nack"]
+
     Startup["Startup recovery scan"]
     ProcessScan["PROCESS_DIR jobs"]
-    Handler["Media handler"]
-    Validate["Parse and validate job"]
-    Ready["Mark item as .ready"]
-    ProcessDir["Move job to PROCESS_DIR"]
-    Processing["Mark item as .processing"]
-    HLS["FFmpeg HLS encoding"]
-    Done["Mark item as .done"]
-    DoneDir["Move job to DONE_DIR"]
-    Error["Mark item as .error and move to ERROR_DIR"]
-    StatusDone["Publish DONE status"]
-    StatusError["Publish ERROR status"]
-    Ack["Ack message"]
-    Nack["Nack failed message"]
 
     Startup --> ProcessScan --> Error
-    RabbitMQ --> Handler --> Validate --> Ready --> ProcessDir --> Processing --> HLS
-    HLS --> Done --> DoneDir --> StatusDone --> Ack
+
+    RabbitMQ --> Handler
+    Handler --> Validate
+    Validate --> Ready
+    Ready --> ProcessDir
+    ProcessDir --> Processing
+    Processing --> HLS
+
+    HLS --> Done
+    Done --> DoneDir
+    DoneDir --> StatusDone
+    StatusDone --> Ack
+
     Handler --> Error
     Processing --> Error
     HLS --> Error
-    Error --> StatusError --> Nack
+
+    Error --> StatusError
+    StatusError --> Nack
 ```
 
 ## Job Message Format
