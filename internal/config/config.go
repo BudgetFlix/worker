@@ -12,6 +12,9 @@ type Config struct {
 	RabbitMQUsername string
 	RabbitMQPassword string
 
+	UploadQueue      string
+	UploadRetryQueue string
+
 	NewDir     string
 	ProcessDir string
 	DoneDir    string
@@ -31,12 +34,14 @@ func Load() Config {
 		RabbitMQUsername: getEnv("RABBITMQ_USERNAME", "guest"),
 		RabbitMQPassword: getEnv("RABBITMQ_PASSWORD", "guest"),
 
+		UploadQueue:      getEnv("VIDEO_UPLOAD_QUEUE", "video.upload"),
+		UploadRetryQueue: getEnv("VIDEO_UPLOAD_RETRY_QUEUE", "video.upload.retry"),
+
 		NewDir:     getEnv("NEW_DIR", "/tmp/new"),
 		ProcessDir: getEnv("PROCESS_DIR", "/tmp/process"),
 		DoneDir:    getEnv("DONE_DIR", "/tmp/done"),
 		ErrorDir:   getEnv("ERROR_DIR", "/tmp/error"),
 		ErrorLog:   getEnv("ERROR_LOG", "/tmp/error/error.log"),
-
 
 		MovieSource:  getEnv("MOVIE_SOURCE", "/tmp/movies"),
 		SeriesSource: getEnv("SERIES_SOURCE", "/tmp/series"),
@@ -70,12 +75,14 @@ func getEnv(key string, fallback string) string {
 
 func validate(cfg Config) {
 	required := map[string]string{
-		"RABBITMQ_HOST": cfg.RabbitMQHost,
-		"RABBITMQ_PORT": cfg.RabbitMQPort,
-		"NEW_DIR":       cfg.NewDir,
-		"PROCESS_DIR":   cfg.ProcessDir,
-		"DONE_DIR":      cfg.DoneDir,
-		"ERROR_DIR":     cfg.ErrorDir,
+		"RABBITMQ_HOST":            cfg.RabbitMQHost,
+		"RABBITMQ_PORT":            cfg.RabbitMQPort,
+		"VIDEO_UPLOAD_QUEUE":       cfg.UploadQueue,
+		"VIDEO_UPLOAD_RETRY_QUEUE": cfg.UploadRetryQueue,
+		"NEW_DIR":                  cfg.NewDir,
+		"PROCESS_DIR":              cfg.ProcessDir,
+		"DONE_DIR":                 cfg.DoneDir,
+		"ERROR_DIR":                cfg.ErrorDir,
 	}
 
 	for key, value := range required {

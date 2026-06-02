@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
 	"worker/internal/job"
 )
 
@@ -24,7 +25,7 @@ func ChangeState(
 ) error {
 
 	if from != StateNew &&
-	!strings.HasSuffix(item.Path, string(from)) {
+		!strings.HasSuffix(item.Path, string(from)) {
 		return fmt.Errorf(
 			"file does not have expected state suffix %s: %s",
 			from,
@@ -49,4 +50,32 @@ func ChangeState(
 	) + string(to)
 
 	return nil
+}
+
+func ChangeToError(
+	item *job.VideoItem,
+) error {
+	if strings.HasSuffix(item.Path, string(StateError)) {
+		return nil
+	}
+
+	for _, state := range []FileState{
+		StateProcessing,
+		StateReady,
+		StateDone,
+		StateNew,
+	} {
+		if state == StateNew || strings.HasSuffix(item.Path, string(state)) {
+			return ChangeState(
+				item,
+				state,
+				StateError,
+			)
+		}
+	}
+
+	return fmt.Errorf(
+		"file has unknown state suffix: %s",
+		item.Path,
+	)
 }
