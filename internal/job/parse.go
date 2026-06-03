@@ -80,6 +80,13 @@ func jobPathMaker(msg Message) string {
 }
 
 func pathExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
+	if _, err := os.Stat(path); err == nil {
+		return true
+	}
+
+	if _, err := os.Stat(path + ".error"); err == nil {
+		return true
+	}
+
+	return false
 }
