@@ -68,7 +68,7 @@ func jobPathMaker(msg Message) string {
 
 	errorJobPath := filepath.Join(
 		cfg.ErrorDir,
-		"job_"+msg.JobID,
+		"job_" + msg.JobID + ".error",
 	)
 
 	// TODO: Resolve the job folder from the incoming message once the API sends it.
@@ -83,10 +83,5 @@ func pathExists(path string) bool {
 	if _, err := os.Stat(path); err == nil {
 		return true
 	}
-
-	if _, err := os.Stat(path + ".error"); err == nil {
-		return true
-	}
-
 	return false
 }
