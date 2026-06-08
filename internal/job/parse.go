@@ -21,6 +21,7 @@ type Message struct {
 	Videos  map[int]string `json:"videos"`
 	Type    MediaType      `json:"type"`
 	Path    string         `json:"path"`
+	Retry	bool		   `json:"retry"`
 }
 
 func FromJSON(data []byte) (*MediaJob, error) {
@@ -39,7 +40,7 @@ func FromJSON(data []byte) (*MediaJob, error) {
 		items = append(items, VideoItem{
 			Index:    index,
 			FileName: filename,
-			Path:     filepath.Join(jobPath, filename),
+			Path:     VideoPathMaker(msg,filename,jobPath),
 		})
 	}
 
@@ -68,7 +69,7 @@ func jobPathMaker(msg Message) string {
 
 	errorJobPath := filepath.Join(
 		cfg.ErrorDir,
-		"job_" + msg.JobID + ".error",
+		"job_" + msg.JobID,
 	)
 
 	// TODO: Resolve the job folder from the incoming message once the API sends it.
@@ -77,6 +78,13 @@ func jobPathMaker(msg Message) string {
 	}
 
 	return newJobPath
+}
+
+func VideoPathMaker(msg Message,filename ,jobPath string) string {
+	if msg.Retry {
+		return filepath.Join(jobPath, filename + ".error")
+	}
+	return filepath.Join(jobPath, filename)
 }
 
 func pathExists(path string) bool {
