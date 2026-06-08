@@ -2,7 +2,7 @@ package job
 
 import (
 	"errors"
-	
+
 	"os"
 )
 
@@ -33,19 +33,17 @@ func Validate(job *MediaJob) error {
 		return errors.New("job path is not directory")
 	}
 
-for i := range job.Items {
-	item := &job.Items[i]
+	for i := range job.Items {
+    item := &job.Items[i]
 
-	fullPath := job.ItemPath(item)
+    info, err := os.Stat(item.Path)
+    if err != nil {
+        return err
+    }
 
-	info, err := os.Stat(fullPath)
-	if err != nil {
-		return err
-	}
-
-	if info.IsDir() {
-		return errors.New("video item is directory")
-	}
+    if info.IsDir() {
+        return errors.New("video item is directory")
+    }
 }
 
 	return nil
