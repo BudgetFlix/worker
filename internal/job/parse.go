@@ -72,7 +72,6 @@ func jobPathMaker(msg Message) string {
 		"job_" + msg.JobID,
 	)
 
-	// TODO: Resolve the job folder from the incoming message once the API sends it.
 	if pathExists(errorJobPath) {
 		return errorJobPath
 	}

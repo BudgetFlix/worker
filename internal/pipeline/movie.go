@@ -98,6 +98,11 @@ func (p *Movie) Execute(
 		logger.Loging("✅ Success encode")
 		logger.Job(job)
 
+		err = storage.MovePoster(job, cfg.MovieSource)
+		if err != nil {
+			return err
+		}
+
 		err = storage.ChangeState(
 			item,
 			storage.StateProcessing,
