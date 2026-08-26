@@ -55,18 +55,42 @@ func MovePoster(
     mediaJob *job.MediaJob,
     movieSource string,
 ) error {
-    posterPath := filepath.Join(
-        mediaJob.Path,
+    return moveArtwork(
+        mediaJob,
+        movieSource,
         "poster.jpg",
     )
+}
 
-    if _, err := os.Stat(posterPath); err != nil {
+func MoveBackground(
+    mediaJob *job.MediaJob,
+    movieSource string,
+) error {
+    return moveArtwork(
+        mediaJob,
+        movieSource,
+        "background.jpg",
+    )
+}
+
+func moveArtwork(
+    mediaJob *job.MediaJob,
+    movieSource string,
+    filename string,
+) error {
+    sourcePath := filepath.Join(
+        mediaJob.Path,
+        filename,
+    )
+
+    if _, err := os.Stat(sourcePath); err != nil {
         if os.IsNotExist(err) {
             return nil
         }
 
         return fmt.Errorf(
-            "stat poster: %w",
+            "stat %s: %w",
+            filename,
             err,
         )
     }
@@ -85,24 +109,27 @@ func MovePoster(
 
     targetPath := filepath.Join(
         movieDir,
-        "poster.jpg",
+        filename,
     )
 
     if _, err := os.Stat(targetPath); err == nil {
         return fmt.Errorf(
-            "target poster already exists: %s",
+            "target %s already exists: %s",
+            filename,
             targetPath,
         )
     } else if !os.IsNotExist(err) {
         return fmt.Errorf(
-            "stat target poster: %w",
+            "stat target %s: %w",
+            filename,
             err,
         )
     }
 
-    if err := os.Rename(posterPath, targetPath); err != nil {
+    if err := os.Rename(sourcePath, targetPath); err != nil {
         return fmt.Errorf(
-            "move poster: %w",
+            "move %s: %w",
+            filename,
             err,
         )
     }

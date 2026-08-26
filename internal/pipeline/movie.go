@@ -103,6 +103,11 @@ func (p *Movie) Execute(
 			return err
 		}
 
+		err = storage.MoveBackground(job, cfg.MovieSource)
+		if err != nil {
+			return err
+		}
+
 		err = storage.ChangeState(
 			item,
 			storage.StateProcessing,
