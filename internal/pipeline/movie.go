@@ -100,12 +100,12 @@ func (p *Movie) Execute(
 
 		err = storage.MovePoster(job, cfg.MovieSource)
 		if err != nil {
-			return err
+			return moveFailedJob(cfg, job, item, err)
 		}
 
 		err = storage.MoveBackground(job, cfg.MovieSource)
 		if err != nil {
-			return err
+			return moveFailedJob(cfg, job, item, err)
 		}
 
 		err = storage.ChangeState(
