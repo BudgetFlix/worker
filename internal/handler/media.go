@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -35,7 +36,13 @@ func Media(msg amqp.Delivery) error {
 	logger.Loging("✅ Success validation in handler")
 
 	for i := range mediajob.Items {
-		err = storage.ChangeState(&mediajob.Items[i], storage.StateNew, storage.StateReady)
+		item := &mediajob.Items[i]
+		fromState := storage.StateNew
+		if strings.HasSuffix(item.Path, string(storage.StateError)) {
+			fromState = storage.StateError
+		}
+
+ 		err = storage.ChangeState(item, fromState, storage.StateReady)
 		if err != nil {
 			return err
 		}
