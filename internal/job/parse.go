@@ -21,7 +21,7 @@ type Message struct {
 	Videos  map[int]string `json:"videos"`
 	Type    MediaType      `json:"type"`
 	Path    string         `json:"path"`
-	Retry	bool		   `json:"retry"`
+	Retry   bool           `json:"retry"`
 }
 
 func FromJSON(data []byte) (*MediaJob, error) {
@@ -40,7 +40,7 @@ func FromJSON(data []byte) (*MediaJob, error) {
 		items = append(items, VideoItem{
 			Index:    index,
 			FileName: filename,
-			Path:     VideoPathMaker(msg,filename,jobPath),
+			Path:     VideoPathMaker(msg, filename, jobPath),
 		})
 	}
 
@@ -69,19 +69,29 @@ func jobPathMaker(msg Message) string {
 
 	errorJobPath := filepath.Join(
 		cfg.ErrorDir,
-		"job_" + msg.JobID,
+		"job_"+msg.JobID,
 	)
 
 	if pathExists(errorJobPath) {
 		return errorJobPath
 	}
 
+	doneJobPath := filepath.Join(
+		cfg.DoneDir,
+		"job_"+msg.JobID,
+	)
+
+	if pathExists(doneJobPath) {
+		return doneJobPath
+	}
+
 	return newJobPath
 }
 
-func VideoPathMaker(msg Message,filename ,jobPath string) string {
-	if msg.Retry {
-		return filepath.Join(jobPath, filename + ".error")
+func VideoPathMaker(msg Message, filename, jobPath string) string {
+	errorPath := filepath.Join(jobPath, filename+".error")
+	if msg.Retry || pathExists(errorPath) {
+		return errorPath
 	}
 	return filepath.Join(jobPath, filename)
 }

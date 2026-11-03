@@ -2,23 +2,16 @@ package rabbitmq
 
 import (
 	amqp "github.com/rabbitmq/amqp091-go"
-	"log"
 )
 
-func Ack(msg amqp.Delivery) {
-
-	err := msg.Ack(false)
-
-	if err != nil {
-		log.Printf("faild to ack message: %v", err)
-	}
+func Ack(msg amqp.Delivery) error {
+	return msg.Ack(false)
 }
 
-func Nack(msg amqp.Delivery) {
-	err := msg.Nack(false, false)
+func Nack(msg amqp.Delivery) error {
+	return msg.Nack(false, false)
+}
 
-	if err != nil {
-		log.Printf("faild to nack messsage: %v", err)
-	}
-
+func NackRequeue(msg amqp.Delivery) error {
+	return msg.Nack(false, true)
 }

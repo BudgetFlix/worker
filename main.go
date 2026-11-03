@@ -46,6 +46,11 @@ func main() {
 		connection,
 	)
 
+	if err := rabbitmq.FlushStatusOutbox(ctx, &cfg, producer); err != nil {
+		log.Printf("failed to flush status outbox: %v", err)
+	}
+	go rabbitmq.RetryStatusOutbox(ctx, &cfg, producer)
+
 	go rabbitmq.Loop(
 		ctx,
 		msgs,

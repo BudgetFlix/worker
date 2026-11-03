@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"context"
 	"log"
+	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
@@ -43,16 +44,17 @@ func Loop(
 					"message handle failed: %v",
 					err,
 				)
-				handleError(msg, err, producer, cfg)
+				handleError(ctx, msg, err, producer, cfg)
 
 				continue
 			}
-			handleDone(msg, producer, cfg)
+			handleDone(ctx, msg, producer, cfg)
 		}
 	}
 }
 
 func handleDone(
+	ctx context.Context,
 	msg amqp.Delivery,
 	producer *Producer,
 	cfg *config.Config,
@@ -61,7 +63,9 @@ func handleDone(
 	mediaJob, err := job.FromJSON(msg.Body)
 	if err != nil {
 		log.Printf("failed to parse message: %v", err)
-		Nack(msg)
+		if nackErr := Nack(msg); nackErr != nil {
+			log.Printf("failed to nack malformed message: %v", nackErr)
+		}
 		return
 	}
 
@@ -70,21 +74,32 @@ func handleDone(
 		Status: "DONE",
 	}
 
-	err = producer.Publish(
+	err = publishStatus(
+		ctx,
+		producer,
+		cfg,
 		cfg.UploadRetryQueue,
 		retryMsg,
 	)
 
 	if err != nil {
 		log.Printf("failed to publish retry message: %v", err)
-		Nack(msg)
+		if nackErr := NackRequeue(msg); nackErr != nil {
+			log.Printf("failed to nack message after publish failure: %v", nackErr)
+		}
 		return
 	}
 
-	Ack(msg)
+	if err := Ack(msg); err != nil {
+		log.Printf("failed to ack completed message: %v", err)
+		if nackErr := NackRequeue(msg); nackErr != nil {
+			log.Printf("failed to requeue message after ack failure: %v", nackErr)
+		}
+	}
 }
 
 func handleError(
+	ctx context.Context,
 	msg amqp.Delivery,
 	processErr error,
 	producer *Producer,
@@ -94,7 +109,9 @@ func handleError(
 	mediaJob, err := job.FromJSON(msg.Body)
 	if err != nil {
 		log.Printf("failed to parse message: %v", err)
-		Nack(msg)
+		if nackErr := Nack(msg); nackErr != nil {
+			log.Printf("failed to nack malformed message: %v", nackErr)
+		}
 		return
 	}
 
@@ -104,15 +121,64 @@ func handleError(
 		ErrorMsg: processErr.Error(),
 	}
 
-	err = producer.Publish(
+	err = publishStatus(
+		ctx,
+		producer,
+		cfg,
 		cfg.UploadRetryQueue,
 		retryMsg,
 	)
 	if err != nil {
 		log.Printf("failed to publish retry message: %v", err)
-		Nack(msg)
+		if nackErr := NackRequeue(msg); nackErr != nil {
+			log.Printf("failed to nack message after publish failure: %v", nackErr)
+		}
 		return
 	}
 
-	Nack(msg)
+	if err := Nack(msg); err != nil {
+		log.Printf("failed to nack failed message: %v", err)
+		if requeueErr := NackRequeue(msg); requeueErr != nil {
+			log.Printf("failed to requeue message after nack failure: %v", requeueErr)
+		}
+	}
+}
+
+func publishStatus(
+	ctx context.Context,
+	producer *Producer,
+	cfg *config.Config,
+	queue string,
+	message dto.MediaRetryMsg,
+) error {
+	persisted := false
+
+	for {
+		if err := producer.Publish(queue, message); err == nil {
+			if persisted {
+				if removeErr := RemoveStatus(cfg, message); removeErr != nil {
+					log.Printf("failed to remove delivered status outbox entry: %v", removeErr)
+				}
+			}
+			return nil
+		} else {
+			log.Printf("failed to publish status, retrying: %v", err)
+		}
+
+		if !persisted {
+			if err := PersistStatus(cfg, queue, message); err != nil {
+				log.Printf("failed to persist status outbox entry: %v", err)
+			} else {
+				persisted = true
+			}
+		}
+
+		timer := time.NewTimer(time.Second)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return ctx.Err()
+		case <-timer.C:
+		}
+	}
 }

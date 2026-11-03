@@ -18,7 +18,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
 # =========================================================
 # FINAL IMAGE
 # =========================================================
-FROM kokpeter/budgetflix-ffmpeg:latest
+FROM kokpeter/budgetflix-ffmpeg:7.1
 
 WORKDIR /app
 
